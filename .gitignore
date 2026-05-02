@@ -1,0 +1,35 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+build/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+data/generated/_pytest_work/
+
+# Frontend build artifacts
+node_modules/
+.next/
+
+# OS
+.DS_Store
+
+# AI logs — tracked structure, ignored content
+.ai-log/*.jsonl
+
+# # Data
+# data/original/reference/
+
+# src/schemas/syllabus_schema.json
+
+/.codex
+/.github
+.codex/hooks.json
+.github/hooks/hooks.json
+
