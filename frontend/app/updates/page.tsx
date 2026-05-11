@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuthMe } from "@/lib/client-auth";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 import { fetchWithStaleCache } from "@/lib/stale-cache";
 
 type UserPayload = {
@@ -20,20 +21,117 @@ type UpdateItem = {
   created_at?: string | null;
 };
 
-const tagCopy = {
-  system_update: {
-    label: "System Updates",
-    description: "Platform changes, feature releases, and admin announcements.",
-    accent: "border-teal-200 bg-teal-50 text-teal-800",
+type TagCopy = {
+  label: string;
+  description: string;
+  accent: string;
+};
+
+type PageCopy = {
+  pageKicker: string;
+  pageTitle: string;
+  pageIntro: string;
+  sectionPublish: string;
+  sectionAdminTitle: string;
+  sectionQaTitle: string;
+  fieldTitle: string;
+  fieldTitlePlaceholder: string;
+  fieldTag: string;
+  fieldMessage: string;
+  fieldMessagePlaceholder: string;
+  publish: string;
+  publishing: string;
+  loading: string;
+  emptyCategory: string;
+  authorLabel: string;
+  unknownAuthor: string;
+  messagePublished: string;
+  errorNeedTitleBody: string;
+  errorPublishFailed: string;
+  errorPublishNetwork: string;
+  roleBadgeAdmin: string;
+  roleBadgeQa: string;
+  tags: Record<UpdateItem["tag"], TagCopy>;
+};
+
+const COPY_EN: PageCopy = {
+  pageKicker: "Updates",
+  pageTitle: "Product and policy updates",
+  pageIntro: "Keep faculty informed about platform releases and academic review rules in one shared bulletin space.",
+  sectionPublish: "Publish",
+  sectionAdminTitle: "Share a system update",
+  sectionQaTitle: "Share a school rule update",
+  fieldTitle: "Update title",
+  fieldTitlePlaceholder: "New QA workflow lock is now enabled",
+  fieldTag: "Tag",
+  fieldMessage: "Message",
+  fieldMessagePlaceholder: "Explain the change, who it affects, and any action teachers or QA should take.",
+  publish: "Publish update",
+  publishing: "Publishing...",
+  loading: "Loading updates...",
+  emptyCategory: "No updates published yet in this category.",
+  authorLabel: "Author",
+  unknownAuthor: "Unknown",
+  messagePublished: "Update published.",
+  errorNeedTitleBody: "Add both a title and the update content before publishing.",
+  errorPublishFailed: "Could not publish the update.",
+  errorPublishNetwork: "Network error while publishing the update.",
+  roleBadgeAdmin: "Admin",
+  roleBadgeQa: "QA",
+  tags: {
+    system_update: {
+      label: "System Updates",
+      description: "Platform changes, feature releases, and admin announcements.",
+      accent: "border-teal-200 bg-teal-50 text-teal-800",
+    },
+    school_rule_update: {
+      label: "School Rule Updates",
+      description: "Policy reminders, QA guidance, and institutional review notes.",
+      accent: "border-amber-200 bg-amber-50 text-amber-800",
+    },
   },
-  school_rule_update: {
-    label: "School Rule Updates",
-    description: "Policy reminders, QA guidance, and institutional review notes.",
-    accent: "border-amber-200 bg-amber-50 text-amber-800",
+};
+
+const COPY_VI: PageCopy = {
+  pageKicker: "Cập nhật",
+  pageTitle: "Cập nhật sản phẩm và quy định",
+  pageIntro: "Theo dõi thay đổi nền tảng và quy định học thuật trong một bảng tin dùng chung cho giảng viên và QA.",
+  sectionPublish: "Đăng tin",
+  sectionAdminTitle: "Đăng cập nhật hệ thống",
+  sectionQaTitle: "Đăng cập nhật quy định học thuật",
+  fieldTitle: "Tiêu đề",
+  fieldTitlePlaceholder: "Đã bật khóa phiên QA theo quy trình mới",
+  fieldTag: "Phân loại",
+  fieldMessage: "Nội dung",
+  fieldMessagePlaceholder: "Mô tả thay đổi, đối tượng ảnh hưởng và hành động mà giảng viên hoặc QA cần thực hiện.",
+  publish: "Đăng cập nhật",
+  publishing: "Đang đăng...",
+  loading: "Đang tải cập nhật...",
+  emptyCategory: "Chưa có cập nhật nào trong mục này.",
+  authorLabel: "Tác giả",
+  unknownAuthor: "Không rõ",
+  messagePublished: "Đã đăng cập nhật.",
+  errorNeedTitleBody: "Vui lòng nhập cả tiêu đề và nội dung trước khi đăng.",
+  errorPublishFailed: "Không thể đăng cập nhật.",
+  errorPublishNetwork: "Lỗi mạng khi đăng cập nhật.",
+  roleBadgeAdmin: "Quản trị",
+  roleBadgeQa: "QA",
+  tags: {
+    system_update: {
+      label: "Cập nhật hệ thống",
+      description: "Thay đổi nền tảng, phát hành tính năng và thông báo từ quản trị viên.",
+      accent: "border-teal-200 bg-teal-50 text-teal-800",
+    },
+    school_rule_update: {
+      label: "Cập nhật quy định học thuật",
+      description: "Nhắc nhở chính sách, hướng dẫn QA và ghi chú rà soát từ nhà trường.",
+      accent: "border-amber-200 bg-amber-50 text-amber-800",
+    },
   },
-} as const;
+};
 
 export default function UpdatesPage() {
+  const { locale } = useI18n();
   const { user: authUser, refresh } = useAuthMe();
   const [user, setUser] = useState<UserPayload | null>(null);
   const [items, setItems] = useState<UpdateItem[]>([]);
@@ -45,6 +143,8 @@ export default function UpdatesPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const copy = locale === "vi" ? COPY_VI : COPY_EN;
+  const tagCopy = copy.tags;
   const canPublish = user?.role === "Admin" || user?.role === "QA";
 
   useEffect(() => {
@@ -89,7 +189,7 @@ export default function UpdatesPage() {
 
   async function publishUpdate() {
     if (!title.trim() || !body.trim()) {
-      setError("Add both a title and the update content before publishing.");
+      setError(copy.errorNeedTitleBody);
       return;
     }
     setPublishing(true);
@@ -107,7 +207,7 @@ export default function UpdatesPage() {
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        setError(payload?.error || "Could not publish the update.");
+        setError(payload?.error || copy.errorPublishFailed);
         return;
       }
       const createdItem = payload?.item as UpdateItem | undefined;
@@ -116,9 +216,9 @@ export default function UpdatesPage() {
       }
       setTitle("");
       setBody("");
-      setMessage("Update published.");
+      setMessage(copy.messagePublished);
     } catch {
-      setError("Network error while publishing the update.");
+      setError(copy.errorPublishNetwork);
     } finally {
       setPublishing(false);
     }
@@ -128,11 +228,9 @@ export default function UpdatesPage() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.12),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(251,146,60,0.12),_transparent_20%),linear-gradient(180deg,_#faf7f2_0%,_#f2ede4_100%)] px-4 py-10">
       <div className="mx-auto max-w-6xl space-y-5">
         <header className="rounded-[1.8rem] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">Updates</p>
-          <h1 className="mt-2 text-3xl font-semibold text-stone-950">Product and policy updates</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
-            Keep faculty informed about platform releases and academic review rules in one shared bulletin space.
-          </p>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">{copy.pageKicker}</p>
+          <h1 className="mt-2 text-3xl font-semibold text-stone-950">{copy.pageTitle}</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{copy.pageIntro}</p>
         </header>
 
         {message ? (
@@ -150,9 +248,9 @@ export default function UpdatesPage() {
           <section className="rounded-[1.8rem] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Publish</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{copy.sectionPublish}</p>
                 <h2 className="mt-1 text-xl font-semibold text-stone-950">
-                  {user?.role === "Admin" ? "Share a system update" : "Share a school rule update"}
+                  {user?.role === "Admin" ? copy.sectionAdminTitle : copy.sectionQaTitle}
                 </h2>
               </div>
               <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${tagCopy[tag].accent}`}>
@@ -162,35 +260,35 @@ export default function UpdatesPage() {
 
             <div className="mt-4 grid gap-4">
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-stone-700">Update title</span>
+                <span className="text-sm font-medium text-stone-700">{copy.fieldTitle}</span>
                 <input
                   className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  placeholder="New QA workflow lock is now enabled"
+                  placeholder={copy.fieldTitlePlaceholder}
                 />
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-stone-700">Tag</span>
+                <span className="text-sm font-medium text-stone-700">{copy.fieldTag}</span>
                 <select
                   className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
                   value={tag}
                   onChange={(event) => setTag(event.target.value as "system_update" | "school_rule_update")}
                   disabled={user?.role !== "Admin"}
                 >
-                  {user?.role === "Admin" ? <option value="system_update">System update</option> : null}
-                  {user?.role === "QA" ? <option value="school_rule_update">School rule update</option> : null}
+                  {user?.role === "Admin" ? <option value="system_update">{tagCopy.system_update.label}</option> : null}
+                  {user?.role === "QA" ? <option value="school_rule_update">{tagCopy.school_rule_update.label}</option> : null}
                 </select>
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-stone-700">Message</span>
+                <span className="text-sm font-medium text-stone-700">{copy.fieldMessage}</span>
                 <textarea
                   className="min-h-36 rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
                   value={body}
                   onChange={(event) => setBody(event.target.value)}
-                  placeholder="Explain the change, who it affects, and any action teachers or QA should take."
+                  placeholder={copy.fieldMessagePlaceholder}
                 />
               </label>
 
@@ -200,7 +298,7 @@ export default function UpdatesPage() {
                 onClick={() => void publishUpdate()}
                 disabled={publishing}
               >
-                {publishing ? "Publishing..." : "Publish update"}
+                {publishing ? copy.publishing : copy.publish}
               </button>
             </div>
           </section>
@@ -208,7 +306,7 @@ export default function UpdatesPage() {
 
         {loading ? (
           <section className="rounded-[1.8rem] border border-white/70 bg-white/90 p-6 text-center text-stone-500 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-            Loading updates...
+            {copy.loading}
           </section>
         ) : (
           <div className="grid gap-5 xl:grid-cols-2">
@@ -227,7 +325,7 @@ export default function UpdatesPage() {
                 <div className="mt-4 grid gap-3">
                   {groupedUpdates[tagKey].length === 0 ? (
                     <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4 text-sm text-stone-500">
-                      No updates published yet in this category.
+                      {copy.emptyCategory}
                     </div>
                   ) : (
                     groupedUpdates[tagKey].map((item) => (
@@ -235,13 +333,17 @@ export default function UpdatesPage() {
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <h3 className="text-base font-semibold text-stone-950">{item.title}</h3>
                           <div className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${tagCopy[tagKey].accent}`}>
-                            {tagKey === "system_update" ? "Admin" : "QA"}
+                            {tagKey === "system_update" ? copy.roleBadgeAdmin : copy.roleBadgeQa}
                           </div>
                         </div>
                         <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-stone-700">{item.body}</p>
                         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-500">
-                          <span>Author: {item.author_name || item.author_email || "Unknown"}</span>
-                          {item.created_at ? <span>{new Date(item.created_at).toLocaleString()}</span> : null}
+                          <span>
+                            {copy.authorLabel}: {item.author_name || item.author_email || copy.unknownAuthor}
+                          </span>
+                          {item.created_at ? (
+                            <span>{new Date(item.created_at).toLocaleString(locale === "vi" ? "vi-VN" : "en-US")}</span>
+                          ) : null}
                         </div>
                       </article>
                     ))

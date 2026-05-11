@@ -59,8 +59,11 @@ export function AppNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>(() => initializeTheme());
   const [language, setLanguage] = useState<PreferredLanguage>(() => getPreferredLanguage());
+  const navRef = useRef<HTMLElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+  const menuItemClass =
+    "block rounded-xl px-3 py-2 text-[15px] leading-6 text-stone-700 transition-colors hover:bg-stone-100";
 
   const workspaceLink = useMemo(() => {
     if (!user) return null;
@@ -155,20 +158,33 @@ export function AppNav() {
   }, [user?.email, fetchNotifications]);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
+    function handleClickOutside(event: PointerEvent) {
+      const target = event.target as Node;
+      if (navRef.current && !navRef.current.contains(target)) {
+        setShowNotifications(false);
+        setShowAccountMenu(false);
+        setMobileOpen(false);
+        return;
+      }
+      if (notificationRef.current && !notificationRef.current.contains(target)) {
         setShowNotifications(false);
       }
-      if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
+      if (accountRef.current && !accountRef.current.contains(target)) {
         setShowAccountMenu(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("pointerdown", handleClickOutside);
+    return () => document.removeEventListener("pointerdown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const closeMenus = window.setTimeout(() => {
+      setShowNotifications(false);
+      setShowAccountMenu(false);
+      setMobileOpen(false);
+    }, 0);
+    return () => window.clearTimeout(closeMenus);
+  }, [pathname]);
 
   async function markAllRead() {
     if (!user?.email) return;
@@ -225,7 +241,10 @@ export function AppNav() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/50 bg-[linear-gradient(180deg,_rgba(255,255,255,0.97),_rgba(252,249,244,0.9))] backdrop-blur">
+    <header
+      ref={navRef}
+      className="sticky top-0 z-40 border-b border-white/50 bg-[linear-gradient(180deg,_rgba(255,255,255,0.97),_rgba(252,249,244,0.9))] backdrop-blur"
+    >
       <nav className="mx-auto max-w-7xl px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <Link href="/" className="min-w-0 text-base font-semibold tracking-[0.01em] text-stone-950 sm:text-xl">
@@ -343,7 +362,7 @@ export function AppNav() {
                   {user ? (
                     <Link
                       href="/user"
-                      className="block rounded-xl px-3 py-2 text-sm text-stone-700 hover:bg-stone-100"
+                      className={menuItemClass}
                       onClick={() => setShowAccountMenu(false)}
                     >
                       {t("nav.view_account")}
@@ -351,7 +370,7 @@ export function AppNav() {
                   ) : (
                     <Link
                       href="/login"
-                      className="block rounded-xl px-3 py-2 text-sm text-stone-700 hover:bg-stone-100"
+                      className={menuItemClass}
                       onClick={() => setShowAccountMenu(false)}
                     >
                       {t("nav.sign_in")}
@@ -360,7 +379,7 @@ export function AppNav() {
 
                   <button
                     type="button"
-                    className="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm text-stone-700 hover:bg-stone-100"
+                    className={`mt-1 w-full text-left ${menuItemClass}`}
                     onClick={toggleTheme}
                   >
                     {t("nav.switch_theme", { mode: theme === "dark" ? t("nav.theme_light") : t("nav.theme_dark") })}
@@ -372,7 +391,7 @@ export function AppNav() {
                     </label>
                     <select
                       id="account-language"
-                      className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-700 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                      className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-[15px] leading-6 text-stone-700 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                       value={language}
                       onChange={(event) => changeLanguage(event.target.value === "en" ? "en" : "vi")}
                     >
@@ -383,7 +402,7 @@ export function AppNav() {
 
                   <Link
                     href="/faq?support=1"
-                    className="mt-1 block rounded-xl px-3 py-2 text-sm text-stone-700 hover:bg-stone-100"
+                    className={`mt-1 ${menuItemClass}`}
                     onClick={() => setShowAccountMenu(false)}
                   >
                     {t("nav.help_support")}
@@ -392,7 +411,7 @@ export function AppNav() {
                   {user?.role === "Admin" ? (
                     <Link
                       href="/admin"
-                      className="mt-1 block rounded-xl px-3 py-2 text-sm text-stone-700 hover:bg-stone-100"
+                      className={`mt-1 ${menuItemClass}`}
                       onClick={() => setShowAccountMenu(false)}
                     >
                       {t("nav.admin_console")}
@@ -402,7 +421,7 @@ export function AppNav() {
                   {user ? (
                     <button
                       type="button"
-                      className="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm text-stone-700 hover:bg-stone-100"
+                      className={`mt-1 w-full text-left ${menuItemClass}`}
                       onClick={() => void signOut()}
                     >
                       {t("nav.sign_out")}

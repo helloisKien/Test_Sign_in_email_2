@@ -12,7 +12,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Aptos", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-sans: var(--font-body), "Manrope", "Aptos", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-display: var(--font-heading), "Sora", "Aptos Display", "Segoe UI Variable", "Helvetica Neue", sans-serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", "Consolas", monospace;
 }
 
@@ -43,7 +44,19 @@ body {
     linear-gradient(180deg, var(--canvas-start) 0%, var(--canvas-end) 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
+  letter-spacing: 0.01em;
   transition: background-color 220ms ease, color 220ms ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
+  font-family: var(--font-display);
+  letter-spacing: 0.005em;
 }
 
 button,

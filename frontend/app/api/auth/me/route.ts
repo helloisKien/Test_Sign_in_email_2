@@ -1,11 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { AUTH_COOKIE_NAME, verifyAuthCookieValue } from "@/lib/auth-cookie";
+import {
+    AUTH_COOKIE_MAX_AGE_SECONDS,
+    AUTH_COOKIE_NAME,
+    createAuthCookieValue,
+    type Role,
+    verifyAuthCookieValue,
+} from "@/lib/auth-cookie";
 import { getBackendConnectionErrorMessage, getServerApiBase } from "@/lib/backend-api";
 import { toAppRole } from "@/lib/users";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+async function jsonWithSession(
+    body: Record<string, unknown>,
+    session?: {
+        userId: string;
+        email: string;
+        fullName: string;
+        role: Role;
+    },
+): Promise<NextResponse> {
+    const response = NextResponse.json(body);
+    if (!session) {
+        return response;
+    }
+    try {
+        const token = await createAuthCookieValue(session);
+        response.cookies.set({
+            name: AUTH_COOKIE_NAME,
+            value: token,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/",
+            maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+        });
+    } catch {
+        // If signing fails, preserve the response body and avoid blocking the request.
+    }
+    return response;
+}
 
 export async function GET(request: NextRequest) {
     const payload = await verifyAuthCookieValue(request.cookies.get(AUTH_COOKIE_NAME)?.value);
@@ -35,34 +71,51 @@ export async function GET(request: NextRequest) {
                   }
                 | null;
             if (backendPayload?.id && backendPayload.email && backendPayload.full_name && backendPayload.role) {
-                return NextResponse.json({
-                    userId: backendPayload.id,
-                    email: backendPayload.email,
-                    fullName: backendPayload.full_name,
-                    role: toAppRole(backendPayload.role),
-                    employeeId: backendPayload.employee_id || "",
-                    phoneNumber: backendPayload.phone_number || "",
-                    department: backendPayload.department || "",
-                    teachingSubject: backendPayload.teaching_subject || "",
-                    avatarUrl: backendPayload.avatar_url || null,
-                });
+                const role = toAppRole(backendPayload.role);
+                return jsonWithSession(
+                    {
+                        userId: backendPayload.id,
+                        email: backendPayload.email,
+                        fullName: backendPayload.full_name,
+                        role,
+                        employeeId: backendPayload.employee_id || "",
+                        phoneNumber: backendPayload.phone_number || "",
+                        department: backendPayload.department || "",
+                        teachingSubject: backendPayload.teaching_subject || "",
+                        avatarUrl: backendPayload.avatar_url || null,
+                    },
+                    {
+                        userId: backendPayload.id,
+                        email: backendPayload.email,
+                        fullName: backendPayload.full_name,
+                        role,
+                    },
+                );
             }
         }
     } catch {
         // Fall back to signed cookie payload below when the backend is temporarily unavailable.
     }
 
-    return NextResponse.json({
-        userId: payload.userId,
-        email: payload.email,
-        fullName: payload.fullName,
-        role: payload.role,
-        employeeId: "",
-        phoneNumber: "",
-        department: "",
-        teachingSubject: "",
-        avatarUrl: null,
-    });
+    return jsonWithSession(
+        {
+            userId: payload.userId,
+            email: payload.email,
+            fullName: payload.fullName,
+            role: payload.role,
+            employeeId: "",
+            phoneNumber: "",
+            department: "",
+            teachingSubject: "",
+            avatarUrl: null,
+        },
+        {
+            userId: payload.userId,
+            email: payload.email,
+            fullName: payload.fullName,
+            role: payload.role,
+        },
+    );
 }
 
 export async function PATCH(request: NextRequest) {
@@ -102,17 +155,26 @@ export async function PATCH(request: NextRequest) {
             );
         }
 
-        return NextResponse.json({
-            userId: backendPayload.id,
-            email: backendPayload.email,
-            fullName: backendPayload.full_name,
-            role: toAppRole(backendPayload.role),
-            employeeId: backendPayload.employee_id || "",
-            phoneNumber: backendPayload.phone_number || "",
-            department: backendPayload.department || "",
-            teachingSubject: backendPayload.teaching_subject || "",
-            avatarUrl: backendPayload.avatar_url || null,
-        });
+        const role = toAppRole(backendPayload.role);
+        return jsonWithSession(
+            {
+                userId: backendPayload.id,
+                email: backendPayload.email,
+                fullName: backendPayload.full_name,
+                role,
+                employeeId: backendPayload.employee_id || "",
+                phoneNumber: backendPayload.phone_number || "",
+                department: backendPayload.department || "",
+                teachingSubject: backendPayload.teaching_subject || "",
+                avatarUrl: backendPayload.avatar_url || null,
+            },
+            {
+                userId: backendPayload.id,
+                email: backendPayload.email,
+                fullName: backendPayload.full_name,
+                role,
+            },
+        );
     } catch {
         return NextResponse.json({ error: getBackendConnectionErrorMessage() }, { status: 503 });
     }

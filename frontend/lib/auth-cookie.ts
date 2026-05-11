@@ -1,7 +1,7 @@
 export type Role = "Teacher" | "QA" | "Admin";
 
 export const AUTH_COOKIE_NAME = "user_role";
-export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24;
+export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
 const SESSION_VERSION = "v2";
 const VALID_ROLES = new Set<Role>(["Teacher", "QA", "Admin"]);

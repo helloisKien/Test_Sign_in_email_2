@@ -224,6 +224,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadFileName, setUploadFileName] = useState<string>("");
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [sourceEntry, setSourceEntry] = useState<"manual" | "upload">("manual");
   const [preferredLanguage, setPreferredLanguageState] = useState<PreferredLanguage>(() => getPreferredLanguage());
   const [activeReviewLockId, setActiveReviewLockId] = useState<string | null>(null);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
@@ -583,6 +584,19 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     store.setFieldValue(fieldId, value);
   }
 
+  /** Text sent to /api/audit and persisted as audit "source": queue = teacher submission + field edits; standalone = pasted source. */
+  function resolveAuditSourceTextForModel(): string {
+    const fromField = getFieldValue("source_text").trim();
+    if (activeAuditSubmission) {
+      return (
+        fromField
+        || (activeAuditSubmission.content || "").trim()
+        || (activeAuditSubmission.source_markdown || "").trim()
+      );
+    }
+    return fromField || allSourceContext();
+  }
+
   function hydrateFieldsFromSourceMarkdown(sourceMarkdown: string | null | undefined) {
     if (!sourceMarkdown) {
       return;
@@ -657,9 +671,13 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     setFeedbackStatus(null);
     setError(null);
     setFeedbackText(submission.qa_feedback || "");
-    const sourceText = (submission.source_markdown || submission.content || "").trim();
-    setFieldIfExists("source_text", sourceText);
-    applyAuditSourceSections(sourceText);
+    hydrateFieldsFromSourceMarkdown(submission.source_markdown);
+    applyAuditSourceSections(submission.source_markdown);
+    const primaryAuditBody = (submission.content || submission.source_markdown || "").trim();
+    setFieldIfExists("source_text", primaryAuditBody);
+    if (submission.course_title) {
+      setFieldIfExists("course_name", submission.course_title);
+    }
     setFieldIfExists("review_notes", submission.teacher_note || submission.qa_feedback || "");
   }
 
@@ -778,7 +796,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
         status: nextResult.status,
         content: nextContent,
         outputFormat: nextResult.output_format,
-        sourceMarkdown: mode === "audit" ? (activeAuditSubmission?.source_markdown || getFieldValue("source_text")) : allSourceContext(),
+        sourceMarkdown: mode === "audit" ? resolveAuditSourceTextForModel() : allSourceContext(),
         courseTitle:
           mode === "audit"
             ? (activeAuditSubmission?.course_title || t("untitled_syllabus"))
@@ -958,6 +976,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       }
 
       const nextResult = toBackendResult(parsed);
+      setSourceEntry("upload");
       setLastSubmitPayload(null);
       setResult(nextResult);
       setResultContent(nextResult.content);
@@ -1073,7 +1092,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
   }
 
   function buildAuditPayload(): Record<string, unknown> {
-    const sourceText = getFieldValue("source_text") || allSourceContext();
+    const sourceText = resolveAuditSourceTextForModel();
     return {
       request_id: reviewingRequestIdRef.current || crypto.randomUUID().replace(/-/g, "").slice(0, 16),
       language: preferredLanguage,
@@ -1109,6 +1128,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     setBusySubmit(true);
     setError(null);
     setFeedbackStatus(null);
+    setSourceEntry("manual");
     try {
       if (mode === "generate") {
         const missingFields = validateGenerateRequiredFields();
@@ -1181,7 +1201,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
         feedback_text: effectiveFeedback,
         original_content: result.content,
         edited_content: resultContent !== result.content ? resultContent : null,
-        source_markdown: mode === "audit" ? getFieldValue("source_text") : allSourceContext(),
+        source_markdown: mode === "audit" ? resolveAuditSourceTextForModel() : allSourceContext(),
         metadata: {
           ui: "wizard-shell",
           overrides,
@@ -1264,6 +1284,9 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
           course_title: getFieldValue("course_name") || null,
           teacher_email: userInfo?.email || null,
           teacher_name: userInfo?.fullName || null,
+          source_entry: sourceEntry,
+          source_format: sourceEntry === "manual" ? "manual" : "md",
+          flow_mode: mode,
         }),
       });
       const payload = await parseJsonResponse(response);
@@ -1315,9 +1338,10 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
   }
 
   const hasCurrentStepSnapshot = snapshots.some((snapshot) => snapshot.stepId === currentStepDef.id);
+  const isProcessing = busySubmit || uploadBusy;
   return (
-    <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-5">
+    <div className="min-h-screen px-3 py-6 sm:px-4 lg:px-6 xl:px-8">
+      <div className="mx-auto w-full max-w-[104rem] space-y-5">
         <section className="rounded-[1.7rem] border border-teal-200 bg-teal-50/90 px-4 py-3 text-sm text-teal-950 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <div className="font-semibold">
             {mode === "generate" ? t("wizard.banner.create_title") : t("wizard.banner.review_title")}
@@ -1402,7 +1426,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
               {queueBusy ? t("wizard.queue_refreshing") : t("common.refresh")}
             </button>
           </div>
-          <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <div className="mt-3 grid max-h-[18rem] content-start gap-3 overflow-y-auto pr-1 lg:grid-cols-2">
             {reviewSubmissions.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-500">
                 {mode === "audit" ? t("wizard.queue_empty_audit") : t("wizard.queue_empty_gen")}
@@ -1628,7 +1652,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
 
                     <div className="rounded-[1.5rem] border border-stone-200 bg-white p-4">
                       <div
-                        className="markdown-preview min-h-[30rem] rounded-[1.2rem] border border-stone-200 bg-stone-50 px-4 py-4 text-[15px] shadow-inner"
+                        className="markdown-preview h-[36rem] overflow-y-auto rounded-[1.2rem] border border-stone-200 bg-stone-50 px-4 py-4 text-[15px] shadow-inner"
                         dangerouslySetInnerHTML={{
                           __html: renderPreviewHtml(getFieldValue("source_text") || t("wizard.no_source_md"), "markdown"),
                         }}
@@ -1785,6 +1809,15 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
           ) : null}
         </div>
       </div>
+
+      {isProcessing ? (
+        <div className="pointer-events-none fixed bottom-6 right-6 z-[65]">
+          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-4 py-2 text-xs font-semibold text-slate-700 shadow-[0_12px_30px_rgba(15,23,42,0.18)] backdrop-blur">
+            <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" />
+            {uploadBusy ? t("wizard.uploading") : t("common.working")}
+          </div>
+        </div>
+      ) : null}
 
       {leaveConfirmOpen ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 px-4">
