@@ -16,6 +16,11 @@ type GoogleSignInButtonProps = {
 };
 
 const GOOGLE_SCRIPT_ID = "google-identity-services";
+const GOOGLE_INIT_KEY = "__smartSyllabusGoogleClientId";
+
+type SmartSyllabusWindow = Window & {
+  [GOOGLE_INIT_KEY]?: string;
+};
 
 export function GoogleSignInButton({
   intent,
@@ -38,7 +43,6 @@ export function GoogleSignInButton({
   );
   const [resetNonce, setResetNonce] = useState(0);
   const tRef = useRef(t);
-  tRef.current = t;
 
   const hardResetGoogle = () => {
     const googleId = window.google?.accounts?.id;
@@ -63,16 +67,18 @@ export function GoogleSignInButton({
     onErrorRef.current = onError;
     onLoadingChangeRef.current = onLoadingChange;
     onSuccessRef.current = onSuccess;
-  }, [intent, onError, onLoadingChange, onSuccess, selectedRole]);
+    tRef.current = t;
+  }, [intent, onError, onLoadingChange, onSuccess, selectedRole, t]);
 
   useEffect(() => {
     if (!scriptReady || !clientId || !containerRef.current || !window.google?.accounts?.id) {
       return;
     }
 
+    const smartWindow = window as SmartSyllabusWindow;
     const googleId = window.google.accounts.id;
     googleId.disableAutoSelect();
-    if (!initializedRef.current) {
+    if (!initializedRef.current || smartWindow[GOOGLE_INIT_KEY] !== clientId) {
       googleId.initialize({
         client_id: clientId,
         auto_select: false,
@@ -120,6 +126,7 @@ export function GoogleSignInButton({
           }
         },
       });
+      smartWindow[GOOGLE_INIT_KEY] = clientId;
       initializedRef.current = true;
     }
 

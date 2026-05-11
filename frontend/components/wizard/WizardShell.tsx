@@ -21,6 +21,9 @@ import type {
   WizardDraftEnvelope,
   WizardFieldState,
 } from "@/lib/wizard-types";
+import { usePageTitle } from "@/lib/usePageTitle";
+import { showToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 import { RecoveryBanner } from "./RecoveryBanner";
 import { StepRenderer } from "./StepRenderer";
@@ -73,6 +76,49 @@ type ReviewSubmission = {
   review_lock_expires_at?: string | null;
   reviewed_at?: string | null;
 };
+
+const AUTOSAVE_INTERVAL_MS = 3000;
+const REVIEW_HEARTBEAT_MS = 30_000;
+const REGEN_TIMEOUT_MS = 15_000;
+
+const GENERATOR_TEMPLATES = [
+  {
+    id: "data-structures",
+    courseCode: "CS2436",
+    courseName: "Applied Data Structures",
+    credits: "3",
+    weeks: "15",
+    cloText: "- Analyze core linear and nonlinear data structures.\n- Compare implementation tradeoffs for common operations.",
+    weeklyPlanText:
+      "- Week 1: Complexity review and course overview\n- Week 2: Arrays and linked lists\n- Week 3: Stacks and queues\n- Week 4: Trees and traversals",
+    assessmentText: "- Quizzes: 20%\n- Labs: 30%\n- Final project: 50%",
+    constraintsText: "- Use plain language for undergraduates.\n- Keep assessment descriptions concise and editable.",
+  },
+  {
+    id: "operating-systems",
+    courseCode: "CS3304",
+    courseName: "Operating Systems",
+    credits: "4",
+    weeks: "15",
+    cloText: "- Explain process, memory, and file-system fundamentals.\n- Evaluate scheduling and synchronization strategies.",
+    weeklyPlanText:
+      "- Week 1: OS roles and architecture\n- Week 2: Processes and threads\n- Week 3: CPU scheduling\n- Week 4: Concurrency and locks",
+    assessmentText: "- Midterm exam: 25%\n- Lab reports: 25%\n- Final exam: 25%\n- Team project: 25%",
+    constraintsText: "- Emphasize lab-based learning outcomes.\n- Keep weekly activities specific to system concepts.",
+  },
+  {
+    id: "software-engineering",
+    courseCode: "CS3401",
+    courseName: "Software Engineering",
+    credits: "3",
+    weeks: "15",
+    cloText: "- Apply software lifecycle practices to team projects.\n- Produce maintainable designs, tests, and delivery artifacts.",
+    weeklyPlanText:
+      "- Week 1: Project framing and stakeholder analysis\n- Week 2: Requirements elicitation\n- Week 3: Architecture and backlog planning\n- Week 4: Testing strategy",
+    assessmentText: "- Sprint deliverables: 30%\n- Documentation: 20%\n- Team presentation: 10%\n- Final product demo: 40%",
+    constraintsText: "- Highlight teamwork expectations.\n- Keep revision checkpoints visible for QA review.",
+  },
+] as const;
 
 function splitLines(value: string): string[] {
   return value
@@ -229,6 +275,11 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
   const [activeReviewLockId, setActiveReviewLockId] = useState<string | null>(null);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [leaveConfirmText, setLeaveConfirmText] = useState("");
+  const [confirmQaOpen, setConfirmQaOpen] = useState(false);
+  const [copyLabel, setCopyLabel] = useState<string | null>(null);
+  const [streamPreview, setStreamPreview] = useState("");
+  const [streamStatus, setStreamStatus] = useState<string | null>(null);
+  const [adHocAuditMode, setAdHocAuditMode] = useState(false);
 
   const autosaveKeyRef = useRef<string>("");
   const uploadFileRef = useRef<File | null>(null);
@@ -248,6 +299,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     () => localizeWizardConfig(config, preferredLanguage),
     [config, preferredLanguage],
   );
+  usePageTitle(displayConfig.title);
   const stepDefs = displayConfig.steps;
   const currentStepDef = stepDefs[currentStep] ?? stepDefs[0];
 
@@ -311,7 +363,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       return;
     }
     const interval = window.setInterval(() => {
-      const snapshot: WizardDraftEnvelope = {
+      const baseSnapshot = {
         wizardId,
         mode,
         currentStep: useWizardStore.getState().currentStep,
@@ -320,11 +372,35 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
         ),
         overrides: useWizardStore.getState().overrides,
         snapshots: useWizardStore.getState().snapshots,
+      };
+      const nextFingerprint = JSON.stringify(baseSnapshot);
+      const previousRaw = localStorage.getItem(autosaveKeyRef.current);
+      const previousFingerprint = (() => {
+        if (!previousRaw) return null;
+        try {
+          const parsed = JSON.parse(previousRaw) as WizardDraftEnvelope;
+          return JSON.stringify({
+            wizardId: parsed.wizardId,
+            mode: parsed.mode,
+            currentStep: parsed.currentStep,
+            fields: parsed.fields,
+            overrides: parsed.overrides,
+            snapshots: parsed.snapshots,
+          });
+        } catch {
+          return null;
+        }
+      })();
+      if (previousFingerprint === nextFingerprint) {
+        return;
+      }
+      const snapshot: WizardDraftEnvelope = {
+        ...baseSnapshot,
         savedAt: new Date().toISOString(),
       };
       localStorage.setItem(autosaveKeyRef.current, JSON.stringify(snapshot));
       store.markAutosaved(snapshot.savedAt);
-    }, 3000);
+    }, AUTOSAVE_INTERVAL_MS);
     return () => window.clearInterval(interval);
   }, [mode, store, wizardId]);
 
@@ -415,11 +491,11 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     await releaseReviewLock(activeLockId);
   }, [releaseReviewLock]);
 
-  function requestLeaveConfirmation(action: () => Promise<void>, message?: string) {
+  const requestLeaveConfirmation = useCallback((action: () => Promise<void>, message?: string) => {
     pendingLeaveActionRef.current = action;
     setLeaveConfirmText(message || t("wizard.leave_default"));
     setLeaveConfirmOpen(true);
-  }
+  }, [t]);
 
   async function confirmLeave() {
     const pending = pendingLeaveActionRef.current;
@@ -466,7 +542,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     }, 1_000);
     const interval = window.setInterval(() => {
       void heartbeat();
-    }, 30_000);
+    }, REVIEW_HEARTBEAT_MS);
 
     return () => {
       cancelled = true;
@@ -535,7 +611,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     return () => {
       document.removeEventListener("click", onDocumentClick, true);
     };
-  }, [activeReviewLockId, mode, releaseActiveLockAndReset, router]);
+  }, [activeReviewLockId, mode, releaseActiveLockAndReset, requestLeaveConfirmation, router, t]);
 
   async function loadReviewSubmissions() {
     const status = mode === "audit" ? "submitted,in_progress" : "needs_revision,reject,approve";
@@ -546,6 +622,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     } else if (mode === "generate" && userInfo?.role !== "Admin" && userInfo?.email) {
       queryParams.set("teacher_email", userInfo.email);
     }
+    queryParams.set("limit", mode === "audit" ? "12" : "8");
     setQueueBusy(true);
     try {
       const response = await fetch(`${apiBase}/api/review/submissions?${queryParams.toString()}`);
@@ -582,19 +659,6 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       return;
     }
     store.setFieldValue(fieldId, value);
-  }
-
-  /** Text sent to /api/audit and persisted as audit "source": queue = teacher submission + field edits; standalone = pasted source. */
-  function resolveAuditSourceTextForModel(): string {
-    const fromField = getFieldValue("source_text").trim();
-    if (activeAuditSubmission) {
-      return (
-        fromField
-        || (activeAuditSubmission.content || "").trim()
-        || (activeAuditSubmission.source_markdown || "").trim()
-      );
-    }
-    return fromField || allSourceContext();
   }
 
   function hydrateFieldsFromSourceMarkdown(sourceMarkdown: string | null | undefined) {
@@ -635,6 +699,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
 
   function restoreGenerateSubmission(submission: ReviewSubmission) {
     setActiveAuditSubmission(null);
+    setAdHocAuditMode(false);
     setActiveReviewLockId(null);
     reviewingRequestIdRef.current = submission.request_id;
     setReviewingRequestId(submission.request_id);
@@ -661,6 +726,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
   }
 
   function restoreAuditSubmission(submission: ReviewSubmission) {
+    setAdHocAuditMode(false);
     setActiveAuditSubmission(submission);
     setActiveReviewLockId(submission.request_id);
     reviewingRequestIdRef.current = submission.request_id;
@@ -683,6 +749,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
 
   function clearWizardSession(clearResumeQuery: boolean) {
     setActiveAuditSubmission(null);
+    setAdHocAuditMode(false);
     setActiveReviewLockId(null);
     reviewingRequestIdRef.current = null;
     setReviewingRequestId(null);
@@ -703,6 +770,37 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     if (clearResumeQuery && searchParams.get("resume")) {
       router.replace(pathname);
     }
+  }
+
+  function applyGeneratorTemplate(templateId: (typeof GENERATOR_TEMPLATES)[number]["id"]) {
+    const template = GENERATOR_TEMPLATES.find((item) => item.id === templateId);
+    if (!template) {
+      return;
+    }
+    setFieldIfExists("course_code", template.courseCode);
+    setFieldIfExists("course_name", template.courseName);
+    setFieldIfExists("credits", template.credits);
+    setFieldIfExists("weeks", template.weeks);
+    setFieldIfExists("clo_text", template.cloText);
+    setFieldIfExists("weekly_plan_text", template.weeklyPlanText);
+    setFieldIfExists("assessment_text", template.assessmentText);
+    setFieldIfExists("constraints_text", template.constraintsText);
+    setSourceEntry("manual");
+    showToast(t("wizard.template_loaded"), "success");
+  }
+
+  function startAdHocAudit() {
+    setAdHocAuditMode(true);
+    setActiveAuditSubmission(null);
+    setActiveReviewLockId(null);
+    reviewingRequestIdRef.current = null;
+    setReviewingRequestId(null);
+    setResult(null);
+    setResultContent("");
+    setFeedbackText("");
+    setFeedbackStatus(null);
+    store.setCurrentStep(0);
+    showToast(t("wizard.ad_hoc_ready"), "info");
   }
 
   async function claimAndOpenAuditSubmission(submission: ReviewSubmission) {
@@ -746,6 +844,19 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
 
   function allSourceContext(): string {
     return fieldOrder.map((fieldId) => `## ${fields[fieldId]?.label ?? fieldId}\n${fields[fieldId]?.value ?? ""}`).join("\n\n");
+  }
+
+  /** Body sent to /api/audit (and session feedback): queue = edited source_text or teacher `content`; ad-hoc = pasted source or wizard fields. */
+  function resolveAuditSourceTextForModel(): string {
+    const fromField = getFieldValue("source_text").trim();
+    if (activeAuditSubmission) {
+      return (
+        fromField
+        || (activeAuditSubmission.content || "").trim()
+        || (activeAuditSubmission.source_markdown || "").trim()
+      );
+    }
+    return fromField || allSourceContext();
   }
 
   function validateGenerateRequiredFields(): string[] {
@@ -1014,7 +1125,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       }));
 
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    const timeout = window.setTimeout(() => controller.abort(), REGEN_TIMEOUT_MS);
     try {
       const response = await fetch(`${apiBase}/api/wizard/regenerate-field`, {
         method: "POST",
@@ -1124,11 +1235,105 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     };
   }
 
+  async function runStreamingFlow(endpoint: string, payload: Record<string, unknown>) {
+    setStreamPreview("");
+    setStreamStatus(t("wizard.stream_connecting"));
+
+    const response = await fetch(`${apiBase}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const parsed = await parseJsonResponse(response);
+      throw new Error(extractMessage(parsed, response.status));
+    }
+    if (!response.body) {
+      throw new Error(t("wizard.err_invalid_shape"));
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let completion: Record<string, unknown> | null = null;
+
+    const processEventBlock = (block: string) => {
+      const lines = block.split("\n");
+      let eventName = "";
+      const dataLines: string[] = [];
+      for (const line of lines) {
+        if (line.startsWith("event:")) {
+          eventName = line.slice(6).trim();
+        } else if (line.startsWith("data:")) {
+          dataLines.push(line.slice(5).trim());
+        }
+      }
+      if (!eventName || dataLines.length === 0) {
+        return;
+      }
+      const payloadText = dataLines.join("\n");
+      let eventPayload: unknown = {};
+      try {
+        eventPayload = JSON.parse(payloadText);
+      } catch {
+        eventPayload = { raw: payloadText };
+      }
+
+      if (eventName === "start") {
+        setStreamStatus(t("wizard.stream_started"));
+        return;
+      }
+      if (eventName === "token") {
+        const delta = isRecord(eventPayload) && typeof eventPayload.delta === "string" ? eventPayload.delta : "";
+        if (delta) {
+          setStreamPreview((current) => current + delta);
+        }
+        setStreamStatus(t("wizard.stream_live"));
+        return;
+      }
+      if (eventName === "error") {
+        const message = isRecord(eventPayload) && typeof eventPayload.message === "string"
+          ? eventPayload.message
+          : t("wizard.err_invalid_shape");
+        throw new Error(message);
+      }
+      if (eventName === "complete" && isRecord(eventPayload)) {
+        completion = eventPayload;
+        setStreamStatus(t("wizard.stream_done"));
+      }
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+      buffer = buffer.replace(/\r\n/g, "\n");
+      let separatorIndex = buffer.indexOf("\n\n");
+      while (separatorIndex >= 0) {
+        const block = buffer.slice(0, separatorIndex).trim();
+        buffer = buffer.slice(separatorIndex + 2);
+        if (block) {
+          processEventBlock(block);
+        }
+        separatorIndex = buffer.indexOf("\n\n");
+      }
+      if (done) {
+        break;
+      }
+    }
+
+    if (!completion) {
+      throw new Error(t("wizard.err_invalid_shape"));
+    }
+    return toBackendResult(completion);
+  }
+
   async function submitMainFlow() {
     setBusySubmit(true);
     setError(null);
     setFeedbackStatus(null);
     setSourceEntry("manual");
+    setStreamStatus(null);
+    setStreamPreview("");
     try {
       if (mode === "generate") {
         const missingFields = validateGenerateRequiredFields();
@@ -1137,43 +1342,10 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
           throw new Error(t("wizard.err_missing_fields", { fields: labels }));
         }
       }
-      if (mode === "audit" && !reviewingRequestIdRef.current && !reviewingRequestId) {
-        throw new Error(t("wizard.err_open_audit_first"));
-      }
-      const endpoint = mode === "generate" ? "/api/generate" : "/api/audit";
       const payload = mode === "generate" ? buildGeneratePayload() : buildAuditPayload();
+      const endpoint = mode === "generate" ? "/api/generate/stream" : "/api/audit/stream";
       setLastSubmitPayload(payload);
-      const response = await fetch(`${apiBase}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const parsed = await parseJsonResponse(response);
-      if (!response.ok) {
-        throw new Error(extractMessage(parsed, response.status));
-      }
-      if (!isRecord(parsed)) {
-        throw new Error(t("wizard.err_invalid_shape"));
-      }
-      const nextResult: BackendResult = {
-        request_id: String(parsed.request_id || ""),
-        status: String(parsed.status || "success"),
-        mode: String(parsed.mode || mode),
-        content: String(parsed.content || ""),
-        output_format: String(parsed.output_format || "markdown"),
-        metadata: isRecord(parsed.metadata)
-          ? {
-            model: typeof parsed.metadata.model === "string" ? parsed.metadata.model : undefined,
-            model_provider:
-              typeof parsed.metadata.model_provider === "string" ? parsed.metadata.model_provider : undefined,
-            generated_at: typeof parsed.metadata.generated_at === "string" ? parsed.metadata.generated_at : undefined,
-            latency_ms: typeof parsed.metadata.latency_ms === "number" ? parsed.metadata.latency_ms : undefined,
-            fallback_route:
-              typeof parsed.metadata.fallback_route === "string" ? parsed.metadata.fallback_route : undefined,
-          }
-          : undefined,
-        fallback_reason: typeof parsed.fallback_reason === "string" ? parsed.fallback_reason : null,
-      };
+      const nextResult = await runStreamingFlow(endpoint, payload);
       setResult(nextResult);
       setResultContent(nextResult.content);
       openResultPage(nextResult);
@@ -1331,6 +1503,9 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       }
       setFeedbackStatus(t("wizard.status_decision_sent"));
       setActiveReviewLockId(null);
+      setActiveAuditSubmission(null);
+      reviewingRequestIdRef.current = null;
+      setReviewingRequestId(null);
       await loadReviewSubmissions();
     } catch (reviewError) {
       setError(reviewError instanceof Error ? reviewError.message : String(reviewError));
@@ -1571,11 +1746,34 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
             </div>
 
             {mode === "generate" ? (
-              <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3">
-                <div className="text-sm font-semibold text-indigo-950">{t("wizard.source_upload_title")}</div>
-                <p className="mt-1 text-xs text-indigo-900">{t("wizard.source_upload_body")}</p>
+              <div className="space-y-4 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3">
+                <div>
+                  <div className="text-sm font-semibold text-indigo-950">{t("wizard.source_upload_title")}</div>
+                  <p className="mt-1 text-xs text-indigo-900">{t("wizard.source_upload_body")}</p>
+                </div>
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-900">
+                    {t("wizard.template_title")}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {GENERATOR_TEMPLATES.map((template) => (
+                      <button
+                        key={template.id}
+                        type="button"
+                        className="rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-900 hover:bg-indigo-100"
+                        onClick={() => applyGeneratorTemplate(template.id)}
+                      >
+                        {template.courseName}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <label htmlFor="wizard-source-upload" className="text-xs font-semibold text-indigo-900">
+                    {t("wizard.upload_label")}
+                  </label>
                   <input
+                    id="wizard-source-upload"
                     type="file"
                     accept=".pdf,.json,.txt,.md"
                     className="max-w-full rounded-lg border border-indigo-300 bg-white px-2 py-1 text-xs text-indigo-900"
@@ -1607,6 +1805,42 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                 <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3">
                   <div className="text-sm font-semibold text-indigo-950">{t("wizard.audit_source_title")}</div>
                   <p className="mt-1 text-xs text-indigo-900">{t("wizard.audit_source_body")}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-900 hover:bg-indigo-100"
+                      onClick={startAdHocAudit}
+                    >
+                      {t("wizard.ad_hoc_start")}
+                    </button>
+                    <label htmlFor="wizard-audit-upload" className="text-xs font-semibold text-indigo-900">
+                      {t("wizard.upload_label")}
+                    </label>
+                    <input
+                      id="wizard-audit-upload"
+                      type="file"
+                      accept=".pdf,.json,.txt,.md"
+                      className="max-w-full rounded-lg border border-indigo-300 bg-white px-2 py-1 text-xs text-indigo-900"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] ?? null;
+                        uploadFileRef.current = file;
+                        setUploadFileName(file?.name ?? "");
+                        setUploadStatus(null);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="rounded-lg border border-indigo-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-900 hover:bg-indigo-100 disabled:opacity-50"
+                      onClick={() => void uploadAndRunSource()}
+                      disabled={uploadBusy || !uploadFileName}
+                    >
+                      {uploadBusy ? t("wizard.uploading") : t("wizard.upload_btn")}
+                    </button>
+                  </div>
+                  {uploadFileName ? (
+                    <p className="mt-2 text-xs text-indigo-900">{t("wizard.selected_file", { name: uploadFileName })}</p>
+                  ) : null}
+                  {uploadStatus ? <p className="mt-2 text-xs text-emerald-700">{uploadStatus}</p> : null}
                 </div>
 
                 {activeAuditSubmission ? (
@@ -1658,6 +1892,35 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                         }}
                       />
                     </div>
+                  </>
+                ) : adHocAuditMode ? (
+                  <>
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                      {t("wizard.ad_hoc_hint")}
+                    </div>
+                    <StepRenderer
+                      fields={currentFields}
+                      minimalFieldUi={false}
+                      onChangeField={(fieldId, value) => store.setFieldValue(fieldId, value)}
+                      onRegenerateField={(fieldId) => void regenerateField(fieldId)}
+                      onMoveFieldFocus={(fieldId, direction) => {
+                        const activeFieldIds = currentFields.map((item) => item.fieldId);
+                        const index = activeFieldIds.indexOf(fieldId);
+                        if (index < 0) {
+                          return;
+                        }
+                        const nextIndex = index + direction;
+                        if (nextIndex < 0 || nextIndex >= activeFieldIds.length) {
+                          return;
+                        }
+                        const nextFieldId = activeFieldIds[nextIndex];
+                        const nextElement = document.querySelector(
+                          `[data-wizard-input="${nextFieldId}"]`,
+                        ) as HTMLInputElement | HTMLTextAreaElement | null;
+                        nextElement?.focus();
+                        nextElement?.select();
+                      }}
+                    />
                   </>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 px-4 py-10 text-center text-sm text-stone-500">
@@ -1730,6 +1993,17 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
             </div>
 
             {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</div> : null}
+            {streamStatus ? (
+              <div className="rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-teal-900">
+                  <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-teal-300 border-t-teal-800" />
+                  {streamStatus}
+                </div>
+                {streamPreview ? (
+                  <pre className="mt-3 max-h-64 overflow-auto rounded-xl border border-teal-200 bg-white px-3 py-3 text-xs leading-6 text-slate-800">{streamPreview}</pre>
+                ) : null}
+              </div>
+            ) : null}
           </section>
 
           {result ? (
@@ -1787,7 +2061,13 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                   <button
                     type="button"
                     className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-                    onClick={() => void (mode === "generate" ? submitDraftToQa() : sendReviewDecision())}
+                    onClick={() => {
+                      if (mode === "generate") {
+                        setConfirmQaOpen(true);
+                      } else {
+                        void sendReviewDecision();
+                      }
+                    }}
                     disabled={!result}
                   >
                     {mode === "generate" ? t("wizard.send_qa") : t("wizard.send_decision")}
@@ -1800,6 +2080,24 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                       disabled={!result}
                     >
                       {t("wizard.improve_direct")}
+                    </button>
+                  ) : null}
+                  {result ? (
+                    <button
+                      type="button"
+                      className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(resultContent);
+                          setCopyLabel(t("result.copied"));
+                          showToast(t("result.copied"), "success");
+                          setTimeout(() => setCopyLabel(null), 2000);
+                        } catch {
+                          showToast(t("result.err_copy"), "error");
+                        }
+                      }}
+                    >
+                      {copyLabel || t("result.copy_md")}
                     </button>
                   ) : null}
                 </div>
@@ -1843,6 +2141,19 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmQaOpen}
+        title={t("admin.confirm_send_qa")}
+        description={t("admin.confirm_send_qa_body")}
+        confirmLabel={t("wizard.send_qa")}
+        cancelLabel={t("common.back")}
+        onConfirm={() => {
+          setConfirmQaOpen(false);
+          void submitDraftToQa();
+        }}
+        onCancel={() => setConfirmQaOpen(false)}
+      />
     </div>
   );
 }

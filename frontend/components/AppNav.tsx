@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getPublicApiBase } from "@/lib/backend-api";
 import { useAuthMe, invalidateAuthMeCache } from "@/lib/client-auth";
 import {
+  DEFAULT_LANGUAGE,
   getPreferredLanguage,
   languageChangedEventName,
   setPreferredLanguage,
@@ -58,10 +59,12 @@ export function AppNav() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>(() => initializeTheme());
-  const [language, setLanguage] = useState<PreferredLanguage>(() => getPreferredLanguage());
+  const [language, setLanguage] = useState<PreferredLanguage>(DEFAULT_LANGUAGE);
+  const [tabVisible, setTabVisible] = useState(true);
   const navRef = useRef<HTMLElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
   const menuItemClass =
     "block rounded-xl px-3 py-2 text-[15px] leading-6 text-stone-700 transition-colors hover:bg-stone-100";
 
@@ -110,9 +113,13 @@ export function AppNav() {
   }, [pathname, refresh]);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setLanguage(getPreferredLanguage());
+    }, 0);
     const syncLanguage = () => setLanguage(getPreferredLanguage());
     window.addEventListener(languageChangedEventName(), syncLanguage as EventListener);
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener(languageChangedEventName(), syncLanguage as EventListener);
     };
   }, []);
@@ -139,6 +146,15 @@ export function AppNav() {
   }, [apiBase]);
 
   useEffect(() => {
+    const onVisibilityChange = () => {
+      setTabVisible(document.visibilityState !== "hidden");
+    };
+    onVisibilityChange();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, []);
+
+  useEffect(() => {
     if (!user?.email) {
       const clear = window.setTimeout(() => {
         setNotifications([]);
@@ -150,12 +166,14 @@ export function AppNav() {
     const load = window.setTimeout(() => {
       void fetchNotifications(email);
     }, 0);
-    const interval = window.setInterval(() => void fetchNotifications(email), 30_000);
+    const interval = tabVisible ? window.setInterval(() => void fetchNotifications(email), 30_000) : null;
     return () => {
       window.clearTimeout(load);
-      window.clearInterval(interval);
+      if (interval) {
+        window.clearInterval(interval);
+      }
     };
-  }, [user?.email, fetchNotifications]);
+  }, [user?.email, fetchNotifications, tabVisible]);
 
   useEffect(() => {
     function handleClickOutside(event: PointerEvent) {
@@ -248,7 +266,9 @@ export function AppNav() {
       <nav className="mx-auto max-w-7xl px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <Link href="/" className="min-w-0 text-base font-semibold tracking-[0.01em] text-stone-950 sm:text-xl">
-            <span className="block truncate">{t("nav.brand")}</span>
+            <span className="font-brand block whitespace-nowrap pb-0.5 italic leading-[1.22] [text-shadow:0_1px_0_rgba(255,255,255,0.8),0_6px_14px_rgba(15,23,42,0.16)]">
+              {t("nav.brand")}
+            </span>
           </Link>
 
           <div className="hidden flex-1 items-center justify-center gap-1 lg:flex">
@@ -269,12 +289,15 @@ export function AppNav() {
               <div className="relative" ref={notificationRef}>
                 <button
                   type="button"
+                  ref={notificationButtonRef}
                   className="relative rounded-xl border border-stone-200 bg-white/90 p-2 text-stone-600 hover:bg-stone-100 hover:text-stone-900"
                   onClick={() => {
                     setShowNotifications((value) => !value);
                     setShowAccountMenu(false);
                   }}
                   aria-label={t("nav.notifications")}
+                  aria-expanded={showNotifications}
+                  aria-haspopup="menu"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
@@ -288,41 +311,54 @@ export function AppNav() {
                 </button>
                 {showNotifications ? (
                   <div className="z-50 max-lg:fixed max-lg:inset-x-3 max-lg:top-[4.5rem] max-lg:flex max-lg:justify-center lg:contents">
-                    <div className="w-full max-w-[23rem] overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xl lg:absolute lg:right-0 lg:top-full lg:z-50 lg:mt-2 lg:w-[min(23rem,calc(100vw-1.5rem))]">
-                    <div className="flex items-center justify-between border-b border-stone-100 px-4 py-3">
-                      <span className="text-sm font-semibold text-stone-900">{t("nav.notifications")}</span>
-                      {unreadCount > 0 ? (
-                        <button
-                          type="button"
-                          className="text-xs font-semibold text-teal-700 hover:text-teal-900"
-                          onClick={() => void markAllRead()}
-                        >
-                          {t("nav.mark_all_read")}
-                        </button>
-                      ) : null}
-                    </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <div className="px-4 py-6 text-center text-sm text-stone-400">{t("nav.no_notifications")}</div>
-                      ) : (
-                        notifications.map((item) => (
-                          <Link
-                            key={item.id}
-                            href={notificationHref(item)}
-                            className={`block border-b border-stone-50 px-4 py-3 transition-colors hover:bg-stone-50 ${
-                              !item.is_read ? "bg-teal-50/50" : ""
-                            }`}
-                            onClick={() => {
-                              if (!item.is_read) void markOneRead(item.id);
-                              setShowNotifications(false);
-                            }}
+                    <div
+                      className="w-full max-w-[23rem] overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xl lg:absolute lg:right-0 lg:top-full lg:z-50 lg:mt-2 lg:w-[min(23rem,calc(100vw-1.5rem))]"
+                      role="menu"
+                      aria-label={t("nav.notifications")}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                          event.preventDefault();
+                          setShowNotifications(false);
+                          notificationButtonRef.current?.focus();
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between border-b border-stone-100 px-4 py-3">
+                        <span className="text-sm font-semibold text-stone-900">{t("nav.notifications")}</span>
+                        {unreadCount > 0 ? (
+                          <button
+                            type="button"
+                            className="text-xs font-semibold text-teal-700 hover:text-teal-900"
+                            onClick={() => void markAllRead()}
                           >
-                            <p className="text-sm text-stone-800">{item.message}</p>
-                            <p className="mt-1 text-xs text-stone-400">{formatRelativeTime(item.created_at, locale)}</p>
-                          </Link>
-                        ))
-                      )}
-                    </div>
+                            {t("nav.mark_all_read")}
+                          </button>
+                        ) : null}
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-6 text-center text-sm text-stone-400">{t("nav.no_notifications")}</div>
+                        ) : (
+                          notifications.map((item) => (
+                            <Link
+                              key={item.id}
+                              href={notificationHref(item)}
+                              role="menuitem"
+                              tabIndex={0}
+                              className={`block border-b border-stone-50 px-4 py-3 transition-colors hover:bg-stone-50 ${
+                                !item.is_read ? "bg-teal-50/50" : ""
+                              }`}
+                              onClick={() => {
+                                if (!item.is_read) void markOneRead(item.id);
+                                setShowNotifications(false);
+                              }}
+                            >
+                              <p className="text-sm text-stone-800">{item.message}</p>
+                              <p className="mt-1 text-xs text-stone-500">{formatRelativeTime(item.created_at, locale)}</p>
+                            </Link>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : null}
@@ -438,7 +474,21 @@ export function AppNav() {
               aria-expanded={mobileOpen}
               aria-label={t("nav.toggle_menu")}
             >
-              {mobileOpen ? t("nav.close") : t("nav.menu")}
+              <span className="sr-only">{mobileOpen ? t("nav.close") : t("nav.menu")}</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                {mobileOpen ? (
+                  <>
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M3 6h18" />
+                    <path d="M3 12h18" />
+                    <path d="M3 18h18" />
+                  </>
+                )}
+              </svg>
             </button>
           </div>
         </div>

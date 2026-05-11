@@ -46,6 +46,10 @@ function validatePassword(password: string): string | null {
   return null;
 }
 
+function validateFullName(fullName: string): boolean {
+  return /^[\p{L}\s]+$/u.test(fullName.trim());
+}
+
 function extractApiErrorMessage(payload: BackendSignupPayload | null, fallback: string): string {
   if (!payload) return fallback;
   if ("error" in payload && typeof payload.error === "string" && payload.error) return payload.error;
@@ -74,6 +78,9 @@ export async function POST(request: Request) {
 
   if (body.fullName.trim().length < 2 || body.fullName.trim().length > 100) {
     return NextResponse.json({ error: "Full name must be 2-100 characters." }, { status: 400 });
+  }
+  if (!validateFullName(body.fullName)) {
+    return NextResponse.json({ error: "Full name must contain letters only." }, { status: 400 });
   }
 
   const passwordError = validatePassword(body.password);

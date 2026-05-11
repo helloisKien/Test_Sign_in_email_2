@@ -130,12 +130,12 @@ export default function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder={t("login.placeholder_password")}
-                                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 pr-12 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 pr-24 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-500 hover:text-stone-700"
+                                className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-md bg-stone-50 px-2 py-1 text-xs font-medium text-stone-500 hover:text-stone-700"
                             >
                                 {showPassword ? t("common.hide") : t("common.show")}
                             </button>

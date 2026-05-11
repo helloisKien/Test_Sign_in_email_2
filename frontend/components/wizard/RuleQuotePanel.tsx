@@ -13,7 +13,7 @@ export function RuleQuotePanel({ audit }: { audit: WizardFieldAudit | undefined 
         Xem luat - {audit.source_ref.section}
       </summary>
       <div className="mt-2 space-y-2 text-xs leading-5 text-slate-600">
-        <p className="rounded-lg bg-slate-50 px-3 py-2">{audit.quote}</p>
+        <p className="font-quote rounded-lg bg-slate-50 px-3 py-2 text-sm">{audit.quote}</p>
         <p>
           <span className="font-semibold text-slate-700">Reference:</span> {audit.source_ref.doc} -{" "}
           {audit.source_ref.version}

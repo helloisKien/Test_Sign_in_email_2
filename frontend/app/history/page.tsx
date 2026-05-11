@@ -9,6 +9,8 @@ import { formatLocaleDateTime, formatRelativeTime } from "@/lib/i18n/format-rela
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { saveResultPayload } from "@/lib/result-session";
 import { fetchWithStaleCache } from "@/lib/stale-cache";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { SkeletonGrid } from "@/components/ui/Skeleton";
 
 type HistoryItem = {
   request_id: string;
@@ -56,7 +58,7 @@ function statusBadge(status: string, t: (key: string) => string) {
   const config = STATUS_STYLE[status] || STATUS_STYLE.draft;
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${config.bg} ${config.text}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+      <span className={`h-2 w-2 rounded-full ${config.dot}`} />
       {t(statusLabelKey(status))}
     </span>
   );
@@ -76,11 +78,17 @@ function HistoryPageContent() {
   const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [selectedRequestIds, setSelectedRequestIds] = useState<string[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<HistoryItem | null>(null);
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterSubject, setFilterSubject] = useState("");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
+  const pageSize = 12;
 
   const user = authUser
     ? { email: authUser.email, fullName: authUser.fullName, role: authUser.role }
@@ -115,17 +123,21 @@ function HistoryPageContent() {
       if (filterDateTo) {
         params.set("date_to", filterDateTo);
       }
+      params.set("limit", String(pageSize));
+      params.set("offset", String(page * pageSize));
 
       const cacheKey = `history:${params.toString()}:${currentEmail || "anon"}`;
-      const payload = await fetchWithStaleCache<{ items?: HistoryItem[] }>(
+      const payload = await fetchWithStaleCache<{ items?: HistoryItem[]; total?: number; has_more?: boolean }>(
         cacheKey,
         async () => {
           const response = await fetch(`${apiBase}/api/review/submissions?${params.toString()}`);
-          return (await response.json().catch(() => ({ items: [] }))) as { items?: HistoryItem[] };
+          return (await response.json().catch(() => ({ items: [] }))) as { items?: HistoryItem[]; total?: number; has_more?: boolean };
         },
         20_000,
       );
       setItems(Array.isArray(payload?.items) ? payload.items : []);
+      setTotalItems(typeof payload?.total === "number" ? payload.total : 0);
+      setHasMore(Boolean(payload?.has_more));
     } finally {
       setLoading(false);
     }
@@ -136,14 +148,14 @@ function HistoryPageContent() {
       void loadHistory();
     }, 0);
     return () => window.clearTimeout(timeout);
-  }, [filterStatus, filterDateFrom, filterDateTo]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterStatus, filterDateFrom, filterDateTo, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       void loadHistory();
     }, 400);
     return () => window.clearTimeout(timeout);
-  }, [filterSubject]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterSubject, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function claimForQa(item: HistoryItem): Promise<boolean> {
     if (!isQa || !["submitted", "in_progress"].includes(item.status)) {
@@ -194,13 +206,6 @@ function HistoryPageContent() {
   }
 
   async function deleteSingleSession(item: HistoryItem) {
-    const confirmed = window.confirm(
-      t("history.confirm_delete_one", { title: item.course_title || t("untitled_syllabus") }),
-    );
-    if (!confirmed) {
-      return;
-    }
-
     setMessage(null);
     setDeletingRequestId(item.request_id);
     try {
@@ -226,11 +231,6 @@ function HistoryPageContent() {
     if (visibleSelectedRequestIds.length === 0) {
       return;
     }
-    const confirmed = window.confirm(t("history.confirm_delete_bulk", { n: visibleSelectedRequestIds.length }));
-    if (!confirmed) {
-      return;
-    }
-
     setMessage(null);
     setBulkDeleting(true);
     try {
@@ -245,6 +245,9 @@ function HistoryPageContent() {
       }
       setSelectedRequestIds([]);
       setMessage(failedCount === 0 ? t("history.msg_bulk_ok") : t("history.msg_bulk_partial", { n: failedCount }));
+      if (page > 0 && items.length === visibleSelectedRequestIds.length) {
+        setPage((current) => Math.max(0, current - 1));
+      }
       await loadHistory();
     } catch {
       setMessage(t("history.msg_net_del"));
@@ -323,7 +326,10 @@ function HistoryPageContent() {
                 placeholder={t("history.subject_ph")}
                 className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                 value={filterSubject}
-                onChange={(event) => setFilterSubject(event.target.value)}
+                onChange={(event) => {
+                  setPage(0);
+                  setFilterSubject(event.target.value);
+                }}
               />
             </div>
 
@@ -335,7 +341,10 @@ function HistoryPageContent() {
                 id="filter-status"
                 className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                 value={filterStatus}
-                onChange={(event) => setFilterStatus(event.target.value)}
+                onChange={(event) => {
+                  setPage(0);
+                  setFilterStatus(event.target.value);
+                }}
               >
                 <option value="all">{t("history.opt_all")}</option>
                 <option value="draft">{t("status.draft")}</option>
@@ -356,7 +365,10 @@ function HistoryPageContent() {
                 type="date"
                 className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                 value={filterDateFrom}
-                onChange={(event) => setFilterDateFrom(event.target.value)}
+                onChange={(event) => {
+                  setPage(0);
+                  setFilterDateFrom(event.target.value);
+                }}
               />
             </div>
 
@@ -369,7 +381,10 @@ function HistoryPageContent() {
                 type="date"
                 className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                 value={filterDateTo}
-                onChange={(event) => setFilterDateTo(event.target.value)}
+                onChange={(event) => {
+                  setPage(0);
+                  setFilterDateTo(event.target.value);
+                }}
               />
             </div>
           </div>
@@ -385,7 +400,10 @@ function HistoryPageContent() {
                       ? `${config.bg} ${config.text} ring-2 ring-offset-1`
                       : "bg-stone-50 text-stone-500 hover:bg-stone-100"
                   }`}
-                  onClick={() => setFilterStatus(filterStatus === key ? "all" : key)}
+                  onClick={() => {
+                    setPage(0);
+                    setFilterStatus(filterStatus === key ? "all" : key);
+                  }}
                 >
                   {t(statusLabelKey(key))} ({statusCounts[key]})
                 </button>
@@ -395,7 +413,10 @@ function HistoryPageContent() {
               <button
                 type="button"
                 className="rounded-full px-2.5 py-1 text-xs font-medium text-stone-500 underline hover:text-stone-700"
-                onClick={() => setFilterStatus("all")}
+                onClick={() => {
+                  setPage(0);
+                  setFilterStatus("all");
+                }}
               >
                 {t("history.clear_filter")}
               </button>
@@ -424,7 +445,7 @@ function HistoryPageContent() {
                 <button
                   type="button"
                   className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
-                  onClick={() => void deleteSelectedSessions()}
+                  onClick={() => setConfirmBulkDeleteOpen(true)}
                   disabled={visibleSelectedRequestIds.length === 0 || bulkDeleting}
                 >
                   {bulkDeleting
@@ -438,10 +459,7 @@ function HistoryPageContent() {
 
         <section className="grid gap-3">
           {loading ? (
-            <div className="rounded-[1.75rem] border border-white/60 bg-white/90 p-6 text-center text-stone-500 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-              <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-stone-300 border-t-teal-600" />
-              <p className="mt-2 text-sm">{t("history.loading")}</p>
-            </div>
+            <SkeletonGrid cards={6} />
           ) : items.length === 0 ? (
             <div className="rounded-[1.75rem] border border-white/60 bg-white/90 p-6 text-center shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
               <p className="text-stone-500">{t("history.empty")}</p>
@@ -558,7 +576,7 @@ function HistoryPageContent() {
                       <button
                         type="button"
                         className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
-                        onClick={() => void deleteSingleSession(item)}
+                        onClick={() => setPendingDelete(item)}
                         disabled={deletingRequestId === item.request_id}
                       >
                         {deletingRequestId === item.request_id ? t("common.deleting") : t("history.delete_session")}
@@ -572,21 +590,70 @@ function HistoryPageContent() {
         </section>
 
         {!loading && items.length > 0 ? (
-          <p className="text-center text-xs text-stone-400">
-            {t("history.showing", { n: items.length })}
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-center text-xs text-stone-500">
+            <p>{t("history.showing", { n: items.length })}</p>
+            <p>{t("history.total", { n: totalItems })}</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-40"
+                onClick={() => setPage((current) => Math.max(0, current - 1))}
+                disabled={page === 0}
+              >
+                {t("history.prev_page")}
+              </button>
+              <button
+                type="button"
+                className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-40"
+                onClick={() => setPage((current) => current + 1)}
+                disabled={!hasMore}
+              >
+                {t("history.next_page")}
+              </button>
+            </div>
+          </div>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title={t("history.delete_session")}
+        description={t("history.confirm_delete_one", { title: pendingDelete?.course_title || t("untitled_syllabus") })}
+        confirmLabel={t("history.delete_session")}
+        cancelLabel={t("common.back")}
+        variant="danger"
+        onConfirm={() => {
+          const item = pendingDelete;
+          setPendingDelete(null);
+          if (item) {
+            void deleteSingleSession(item);
+          }
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkDeleteOpen}
+        title={t("history.bulk_title")}
+        description={t("history.confirm_delete_bulk", { n: visibleSelectedRequestIds.length })}
+        confirmLabel={t("history.delete_selected", { n: visibleSelectedRequestIds.length })}
+        cancelLabel={t("common.back")}
+        variant="danger"
+        onConfirm={() => {
+          setConfirmBulkDeleteOpen(false);
+          void deleteSelectedSessions();
+        }}
+        onCancel={() => setConfirmBulkDeleteOpen(false)}
+      />
     </main>
   );
 }
 
 function HistoryLoadingFallback() {
-  const { t } = useI18n();
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-8">
-      <div className="mx-auto max-w-6xl rounded-xl border border-stone-200 bg-white p-6 text-center text-stone-500">
-        {t("history.loading")}
+      <div className="mx-auto max-w-6xl">
+        <SkeletonGrid cards={6} />
       </div>
     </main>
   );

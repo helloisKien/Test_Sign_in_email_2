@@ -12,8 +12,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-body), "Manrope", "Aptos", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
-  --font-display: var(--font-heading), "Sora", "Aptos Display", "Segoe UI Variable", "Helvetica Neue", sans-serif;
+  --font-sans: var(--font-body), "Be Vietnam Pro", "Aptos", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-display: var(--font-heading), "Merriweather", "Aptos Display", "Segoe UI Variable", "Helvetica Neue", serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", "Consolas", monospace;
 }
 
@@ -24,6 +24,23 @@ html[data-theme="dark"] {
   --canvas-end: #111827;
   --accent-soft: rgba(20, 184, 166, 0.18);
   --accent-warm: rgba(249, 115, 22, 0.14);
+  --surface-primary: rgba(15, 23, 42, 0.88);
+  --surface-secondary: rgba(30, 41, 59, 0.75);
+  --border-muted: rgba(100, 116, 139, 0.45);
+  --text-heading: #f8fafc;
+  --text-body: #d1d5db;
+  --text-muted: #9ca3af;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 * {
@@ -59,6 +76,15 @@ h6,
   letter-spacing: 0.005em;
 }
 
+.font-brand {
+  font-family: var(--font-brand), "Playwrite GB S", "Segoe Script", cursive;
+}
+
+.font-quote,
+blockquote {
+  font-family: var(--font-quote), "Dancing Script", "Segoe Script", cursive;
+}
+
 button,
 a[role="button"],
 input[type="button"],
@@ -89,6 +115,19 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+/* Avoid overlap with custom show/hide password controls in Chromium/Edge. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-textfield-decoration-container {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
 }
 
 .markdown-preview {
@@ -176,101 +215,73 @@ html[data-theme="dark"] .markdown-preview hr {
   border-top: 1px solid rgba(148, 163, 184, 0.35);
 }
 
-html:not([data-theme="dark"]) main {
-  background:
-    radial-gradient(circle at 10% 8%, rgba(34, 197, 94, 0.16), transparent 30%),
-    radial-gradient(circle at 88% 12%, rgba(20, 184, 166, 0.13), transparent 26%),
-    linear-gradient(180deg, #eef7f1 0%, #ddebe1 100%) !important;
-}
-
 html:not([data-theme="dark"]) header.sticky {
   border-color: rgba(163, 191, 176, 0.6) !important;
   background: linear-gradient(180deg, rgba(239, 247, 242, 0.96), rgba(229, 240, 233, 0.94)) !important;
 }
 
-html:not([data-theme="dark"]) .bg-white,
-html:not([data-theme="dark"]) .bg-white\/90,
-html:not([data-theme="dark"]) .bg-white\/92,
-html:not([data-theme="dark"]) .bg-white\/95 {
+html:not([data-theme="dark"]) :is(.bg-white, .bg-white\/90, .bg-white\/92, .bg-white\/95) {
   background-color: rgba(243, 250, 245, 0.95) !important;
 }
 
-html:not([data-theme="dark"]) .bg-stone-50,
-html:not([data-theme="dark"]) .bg-stone-100,
-html:not([data-theme="dark"]) .bg-slate-50,
-html:not([data-theme="dark"]) .bg-slate-100 {
+html:not([data-theme="dark"]) :is(.bg-stone-50, .bg-stone-100, .bg-slate-50, .bg-slate-100) {
   background-color: #e8f2ea !important;
 }
 
-html:not([data-theme="dark"]) .border-stone-200,
-html:not([data-theme="dark"]) .border-stone-300,
-html:not([data-theme="dark"]) .border-slate-200,
-html:not([data-theme="dark"]) .border-slate-300,
-html:not([data-theme="dark"]) .border-white\/60,
-html:not([data-theme="dark"]) .border-white\/70 {
+html:not([data-theme="dark"]) :is(.border-stone-200, .border-stone-300, .border-slate-200, .border-slate-300, .border-white\/60, .border-white\/70) {
   border-color: rgba(128, 161, 143, 0.45) !important;
 }
 
-html[data-theme="dark"] .bg-white,
-html[data-theme="dark"] .bg-white\/90,
-html[data-theme="dark"] .bg-white\/92,
-html[data-theme="dark"] .bg-white\/95,
-html[data-theme="dark"] .bg-white\/80 {
-  background-color: rgba(15, 23, 42, 0.88) !important;
+html[data-theme="dark"] :is(.bg-white, .bg-white\/90, .bg-white\/92, .bg-white\/95, .bg-white\/80) {
+  background-color: var(--surface-primary) !important;
 }
 
-html[data-theme="dark"] .bg-stone-50,
-html[data-theme="dark"] .bg-stone-100,
-html[data-theme="dark"] .bg-slate-50,
-html[data-theme="dark"] .bg-slate-100,
-html[data-theme="dark"] .bg-teal-50,
-html[data-theme="dark"] .bg-teal-50\/90,
-html[data-theme="dark"] .bg-amber-50,
-html[data-theme="dark"] .bg-blue-50,
-html[data-theme="dark"] .bg-sky-50,
-html[data-theme="dark"] .bg-emerald-50,
-html[data-theme="dark"] .bg-rose-50,
-html[data-theme="dark"] .bg-fuchsia-50,
-html[data-theme="dark"] .bg-indigo-50 {
-  background-color: rgba(30, 41, 59, 0.75) !important;
+html[data-theme="dark"] :is(
+  .bg-stone-50,
+  .bg-stone-100,
+  .bg-slate-50,
+  .bg-slate-100,
+  .bg-teal-50,
+  .bg-teal-50\/90,
+  .bg-amber-50,
+  .bg-blue-50,
+  .bg-sky-50,
+  .bg-emerald-50,
+  .bg-rose-50,
+  .bg-fuchsia-50,
+  .bg-indigo-50
+) {
+  background-color: var(--surface-secondary) !important;
 }
 
-html[data-theme="dark"] .text-stone-950,
-html[data-theme="dark"] .text-stone-900,
-html[data-theme="dark"] .text-slate-950,
-html[data-theme="dark"] .text-slate-900 {
-  color: #f8fafc !important;
+html[data-theme="dark"] :is(.text-stone-950, .text-stone-900, .text-slate-950, .text-slate-900) {
+  color: var(--text-heading) !important;
 }
 
-html[data-theme="dark"] .text-stone-800,
-html[data-theme="dark"] .text-stone-700,
-html[data-theme="dark"] .text-slate-800,
-html[data-theme="dark"] .text-slate-700,
-html[data-theme="dark"] .text-slate-600,
-html[data-theme="dark"] .text-stone-600 {
-  color: #d1d5db !important;
+html[data-theme="dark"] :is(.text-stone-800, .text-stone-700, .text-slate-800, .text-slate-700, .text-slate-600, .text-stone-600) {
+  color: var(--text-body) !important;
 }
 
-html[data-theme="dark"] .text-stone-500,
-html[data-theme="dark"] .text-slate-500,
-html[data-theme="dark"] .text-stone-400 {
-  color: #9ca3af !important;
+html[data-theme="dark"] :is(.text-stone-500, .text-slate-500, .text-stone-400) {
+  color: var(--text-muted) !important;
 }
 
-html[data-theme="dark"] .border-stone-200,
-html[data-theme="dark"] .border-stone-300,
-html[data-theme="dark"] .border-slate-200,
-html[data-theme="dark"] .border-slate-300,
-html[data-theme="dark"] .border-teal-200,
-html[data-theme="dark"] .border-teal-300,
-html[data-theme="dark"] .border-emerald-200,
-html[data-theme="dark"] .border-emerald-300,
-html[data-theme="dark"] .border-amber-200,
-html[data-theme="dark"] .border-amber-300,
-html[data-theme="dark"] .border-fuchsia-200,
-html[data-theme="dark"] .border-white\/60,
-html[data-theme="dark"] .border-white\/70 {
-  border-color: rgba(100, 116, 139, 0.45) !important;
+html[data-theme="dark"] :is(
+  .border-stone-200,
+  .border-stone-300,
+  .border-slate-200,
+  .border-slate-300,
+  .border-teal-200,
+  .border-teal-300,
+  .border-emerald-200,
+  .border-emerald-300,
+  .border-amber-200,
+  .border-amber-300,
+  .border-fuchsia-200,
+  .border-white\/60,
+  .border-white\/70
+) {
+  border-color: var(--border-muted) !important;
 }
 
 html[data-theme="dark"] .from-white {

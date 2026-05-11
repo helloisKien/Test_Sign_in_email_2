@@ -17,13 +17,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocale] = useState<PreferredLanguage>(DEFAULT_LANGUAGE);
 
   useEffect(() => {
-    setLocale(getPreferredLanguage());
-  }, []);
-
-  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setLocale(getPreferredLanguage());
+    }, 0);
     const onLang = () => setLocale(getPreferredLanguage());
     window.addEventListener(languageChangedEventName(), onLang as EventListener);
-    return () => window.removeEventListener(languageChangedEventName(), onLang as EventListener);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(languageChangedEventName(), onLang as EventListener);
+    };
   }, []);
 
   const t = useCallback(

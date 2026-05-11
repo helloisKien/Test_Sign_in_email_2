@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Smart Syllabus Studio">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#bg)" />
+  <path d="M18 18h20a8 8 0 0 1 8 8v20H26a8 8 0 0 1-8-8V18z" fill="#ecfeff" opacity="0.96" />
+  <path d="M26 22h20v24H30a4 4 0 0 1-4-4V22z" fill="#99f6e4" opacity="0.8" />
+  <path d="M24 28h16M24 35h16M24 42h10" stroke="#0f172a" stroke-width="3.5" stroke-linecap="round" />
+</svg>

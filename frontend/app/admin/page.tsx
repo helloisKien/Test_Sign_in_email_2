@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { SkeletonGrid } from "@/components/ui/Skeleton";
+import { useI18n } from "@/lib/i18n/I18nProvider";
+
 type UserItem = {
   id: string;
   email: string;
@@ -206,6 +210,7 @@ function formatDuration(seconds: unknown): string {
 }
 
 export default function AdminPage() {
+  const { t } = useI18n();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -219,6 +224,12 @@ export default function AdminPage() {
   const [reprocessResult, setReprocessResult] = useState<ReprocessResult | null>(null);
   const [sessionRoleScope, setSessionRoleScope] = useState<"all" | "generator" | "auditor">("all");
   const [sessionUserScope, setSessionUserScope] = useState<string>("all");
+  const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
+  const [bulkBusyAction, setBulkBusyAction] = useState<"release" | "delete" | null>(null);
+  const [pendingDeleteUser, setPendingDeleteUser] = useState<UserItem | null>(null);
+  const [pendingDeleteSession, setPendingDeleteSession] = useState<SessionItem | null>(null);
+  const [confirmBulkReleaseOpen, setConfirmBulkReleaseOpen] = useState(false);
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
   const numberFmt = useMemo(() => new Intl.NumberFormat(), []);
   const moneyFmt = useMemo(
@@ -308,6 +319,16 @@ export default function AdminPage() {
     }
     return sessions;
   }, [effectiveSessionUserScope, sessions]);
+  const visibleSessions = useMemo(() => filteredSessions.slice(0, 32), [filteredSessions]);
+  const selectedSessionSet = useMemo(() => new Set(selectedSessionIds), [selectedSessionIds]);
+  const selectedSessions = useMemo(
+    () => filteredSessions.filter((session) => selectedSessionSet.has(session.request_id)),
+    [filteredSessions, selectedSessionSet],
+  );
+  const releasableSelectedIds = useMemo(
+    () => selectedSessions.filter((session) => session.status === "in_progress").map((session) => session.request_id),
+    [selectedSessions],
+  );
 
   const activeReviewLocks = useMemo(
     () => sessions.filter((session) => session.status === "in_progress"),
@@ -415,10 +436,7 @@ export default function AdminPage() {
     }
   }
 
-  async function deleteUser(userId: string, fullName: string) {
-    if (!window.confirm(`Delete account "${fullName}"? This action cannot be undone.`)) {
-      return;
-    }
+  async function deleteUser(userId: string) {
     setBusyUserId(userId);
     setMessage(null);
     setError(null);
@@ -461,9 +479,6 @@ export default function AdminPage() {
   }
 
   async function deleteSession(requestId: string) {
-    if (!window.confirm(`Delete session "${requestId}" and related feedback records?`)) {
-      return;
-    }
     setBusySessionId(requestId);
     setMessage(null);
     setError(null);
@@ -482,6 +497,91 @@ export default function AdminPage() {
     } finally {
       setBusySessionId(null);
     }
+  }
+
+  async function runBulkRelease() {
+    if (releasableSelectedIds.length === 0) return;
+    setBulkBusyAction("release");
+    setMessage(null);
+    setError(null);
+    try {
+      let success = 0;
+      let failed = 0;
+      for (const requestId of releasableSelectedIds) {
+        const response = await fetch(`/api/review/submissions/${encodeURIComponent(requestId)}/release`, {
+          method: "POST",
+        }).catch(() => null);
+        if (response?.ok) {
+          success += 1;
+        } else {
+          failed += 1;
+        }
+      }
+      if (failed > 0) {
+        setError(`Released ${success} lock(s), ${failed} failed.`);
+      } else {
+        setMessage(`Released ${success} review lock(s).`);
+      }
+      setSelectedSessionIds((current) => current.filter((id) => !releasableSelectedIds.includes(id)));
+      await loadAdminData();
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Bulk lock release failed.");
+    } finally {
+      setBulkBusyAction(null);
+    }
+  }
+
+  async function runBulkDelete() {
+    const requestIds = selectedSessions.map((session) => session.request_id);
+    if (requestIds.length === 0) return;
+    setBulkBusyAction("delete");
+    setMessage(null);
+    setError(null);
+    try {
+      let success = 0;
+      let failed = 0;
+      for (const requestId of requestIds) {
+        const response = await fetch(`/api/admin/sessions/${encodeURIComponent(requestId)}`, {
+          method: "DELETE",
+        }).catch(() => null);
+        if (response?.ok) {
+          success += 1;
+        } else {
+          failed += 1;
+        }
+      }
+      if (failed > 0) {
+        setError(`Deleted ${success} session(s), ${failed} failed.`);
+      } else {
+        setMessage(`Deleted ${success} session(s).`);
+      }
+      setSelectedSessionIds((current) => current.filter((id) => !requestIds.includes(id)));
+      await loadAdminData();
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Bulk session delete failed.");
+    } finally {
+      setBulkBusyAction(null);
+    }
+  }
+
+  function toggleSessionSelection(requestId: string) {
+    setSelectedSessionIds((current) =>
+      current.includes(requestId) ? current.filter((id) => id !== requestId) : [...current, requestId],
+    );
+  }
+
+  function selectVisibleSessions() {
+    setSelectedSessionIds((current) => {
+      const merged = new Set(current);
+      for (const session of visibleSessions) {
+        merged.add(session.request_id);
+      }
+      return Array.from(merged);
+    });
+  }
+
+  function clearSessionSelection() {
+    setSelectedSessionIds([]);
   }
 
   async function runReprocess() {
@@ -528,10 +628,10 @@ export default function AdminPage() {
         <header className="rounded-[1.6rem] border border-white/70 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">Smart Syllabus / Admin</p>
-              <h1 className="font-heading mt-1 text-3xl font-semibold text-stone-950">Operations cockpit</h1>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">{t("admin.kicker")}</p>
+              <h1 className="font-heading mt-1 text-3xl font-semibold text-stone-950">{t("admin.title")}</h1>
               <p className="mt-2 text-sm text-stone-600">
-                Last update: {dashboard?.generated_at ? formatDateTime(dashboard.generated_at) : "N/A"}
+                {t("admin.last_update", { time: dashboard?.generated_at ? formatDateTime(dashboard.generated_at) : "N/A" })}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -540,20 +640,20 @@ export default function AdminPage() {
                 onClick={() => void loadAdminData()}
                 className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-50"
               >
-                Refresh
+                {t("admin.refresh")}
               </button>
               <Link
                 href="/admin/support"
                 className="rounded-xl border border-teal-300 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-100"
               >
-                Open support inbox
+                {t("admin.support_inbox")}
               </Link>
             </div>
           </div>
         </header>
 
         {loading ? (
-          <div className="rounded-2xl border border-stone-200 bg-white/90 px-4 py-3 text-sm text-stone-700">Loading admin analytics...</div>
+          <SkeletonGrid cards={6} />
         ) : null}
 
         {message ? (
@@ -945,7 +1045,7 @@ export default function AdminPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => void deleteUser(user.id, user.full_name)}
+                              onClick={() => setPendingDeleteUser(user)}
                               disabled={busyUserId === user.id}
                               className="rounded-lg border border-rose-300 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
                             >
@@ -1006,7 +1106,7 @@ export default function AdminPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void deleteUser(user.id, user.full_name)}
+                        onClick={() => setPendingDeleteUser(user)}
                         disabled={busyUserId === user.id}
                         className="rounded-lg border border-rose-300 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
                       >
@@ -1067,18 +1167,65 @@ export default function AdminPage() {
           <div className="mb-3 text-xs text-stone-500">
             Showing <strong>{numberFmt.format(filteredSessions.length)}</strong> session(s).
           </div>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={selectVisibleSessions}
+              disabled={visibleSessions.length === 0 || Boolean(bulkBusyAction)}
+              className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100 disabled:opacity-60"
+            >
+              Select visible
+            </button>
+            <button
+              type="button"
+              onClick={clearSessionSelection}
+              disabled={selectedSessionIds.length === 0 || Boolean(bulkBusyAction)}
+              className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-100 disabled:opacity-60"
+            >
+              Clear selection
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmBulkReleaseOpen(true)}
+              disabled={releasableSelectedIds.length === 0 || Boolean(bulkBusyAction)}
+              className="rounded-lg border border-fuchsia-300 bg-fuchsia-50 px-2.5 py-1 text-xs font-semibold text-fuchsia-700 hover:bg-fuchsia-100 disabled:opacity-60"
+            >
+              {bulkBusyAction === "release"
+                ? "Releasing..."
+                : `Release selected locks (${numberFmt.format(releasableSelectedIds.length)})`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmBulkDeleteOpen(true)}
+              disabled={selectedSessions.length === 0 || Boolean(bulkBusyAction)}
+              className="rounded-lg border border-rose-300 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
+            >
+              {bulkBusyAction === "delete"
+                ? "Deleting..."
+                : `Delete selected (${numberFmt.format(selectedSessions.length)})`}
+            </button>
+          </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {filteredSessions.length === 0 ? (
               <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-500">
                 No sessions match this filter.
               </div>
             ) : (
-              filteredSessions.slice(0, 32).map((session) => (
+              visibleSessions.map((session) => (
                 <article key={session.request_id} className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="font-semibold text-stone-950">{session.course_title || "Untitled syllabus"}</div>
-                    <div className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusTone(session.status)}`}>
-                      {session.status.replaceAll("_", " ")}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedSessionSet.has(session.request_id)}
+                        onChange={() => toggleSessionSelection(session.request_id)}
+                        className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500"
+                        aria-label={`Select session ${session.request_id}`}
+                      />
+                      <div className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusTone(session.status)}`}>
+                        {session.status.replaceAll("_", " ")}
+                      </div>
                     </div>
                   </div>
                   <div className="mt-2 space-y-1 text-xs leading-5 text-stone-600">
@@ -1101,7 +1248,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       disabled={busySessionId === session.request_id}
-                      onClick={() => void deleteSession(session.request_id)}
+                      onClick={() => setPendingDeleteSession(session)}
                       className="rounded-lg border border-rose-300 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
                     >
                       Delete session
@@ -1113,6 +1260,67 @@ export default function AdminPage() {
           </div>
         </section>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingDeleteUser)}
+        title="Delete user?"
+        description={`Delete account "${pendingDeleteUser?.full_name || ""}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel={t("common.back")}
+        variant="danger"
+        onConfirm={() => {
+          const user = pendingDeleteUser;
+          setPendingDeleteUser(null);
+          if (user) {
+            void deleteUser(user.id);
+          }
+        }}
+        onCancel={() => setPendingDeleteUser(null)}
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingDeleteSession)}
+        title="Delete session?"
+        description={`Delete session "${pendingDeleteSession?.request_id || ""}" and related feedback records?`}
+        confirmLabel="Delete"
+        cancelLabel={t("common.back")}
+        variant="danger"
+        onConfirm={() => {
+          const session = pendingDeleteSession;
+          setPendingDeleteSession(null);
+          if (session) {
+            void deleteSession(session.request_id);
+          }
+        }}
+        onCancel={() => setPendingDeleteSession(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkReleaseOpen}
+        title="Release selected locks?"
+        description={`Release ${releasableSelectedIds.length} selected in-progress lock(s)?`}
+        confirmLabel="Release"
+        cancelLabel={t("common.back")}
+        onConfirm={() => {
+          setConfirmBulkReleaseOpen(false);
+          void runBulkRelease();
+        }}
+        onCancel={() => setConfirmBulkReleaseOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkDeleteOpen}
+        title="Delete selected sessions?"
+        description={`Delete ${selectedSessions.length} selected session(s) and related feedback records?`}
+        confirmLabel="Delete"
+        cancelLabel={t("common.back")}
+        variant="danger"
+        onConfirm={() => {
+          setConfirmBulkDeleteOpen(false);
+          void runBulkDelete();
+        }}
+        onCancel={() => setConfirmBulkDeleteOpen(false)}
+      />
     </main>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { WizardShell } from "@/components/wizard/WizardShell";
+import { SkeletonCard } from "@/components/ui/Skeleton";
 import { useAuthMe } from "@/lib/client-auth";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { GENERATOR_FLOW_CONFIG } from "@/lib/wizard-config";
@@ -15,8 +16,8 @@ export default function GeneratorPage() {
   if (!userInfo) {
     return (
       <main className="min-h-screen bg-stone-50 px-4 py-8">
-        <div className="mx-auto max-w-4xl rounded-xl border border-stone-200 bg-white p-5 text-sm text-stone-600">
-          {t("workspace.loading")}
+        <div className="mx-auto max-w-4xl">
+          <SkeletonCard lines={5} />
         </div>
       </main>
     );

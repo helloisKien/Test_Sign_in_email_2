@@ -19,6 +19,8 @@ interface FormErrors {
     server?: string;
 }
 
+const FULL_NAME_PATTERN = /^[\p{L}\s]+$/u;
+
 function getPasswordStrength(password: string): { level: number; labelKey: string; color: string } {
     let score = 0;
     if (password.length >= 8) score += 1;
@@ -77,8 +79,10 @@ export default function SignupPage() {
 
     function validate(): FormErrors {
         const errs: FormErrors = {};
-        if (!fullName.trim() || fullName.trim().length < 2) errs.fullName = t("signup.err_fullname_short");
-        if (fullName.trim().length > 100) errs.fullName = t("signup.err_fullname_long");
+        const normalizedName = fullName.trim();
+        if (!normalizedName || normalizedName.length < 2) errs.fullName = t("signup.err_fullname_short");
+        if (normalizedName.length > 100) errs.fullName = t("signup.err_fullname_long");
+        if (normalizedName && !FULL_NAME_PATTERN.test(normalizedName)) errs.fullName = t("signup.err_fullname_letters");
         if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = t("signup.err_email");
         if (password.length < 8) errs.password = t("signup.err_password_len");
         else if (!/[A-Z]/.test(password)) errs.password = t("signup.err_password_upper");
