@@ -1,3 +1,11 @@
+/** Strips auditor-model leakage (streaming path had no tools bound). Safe for generator text (pattern is auditor-specific). */
+export function stripAuditorLeakage(value: string): string {
+  return value
+    .replace(/<tool_code>\s*[\s\S]*?<\/tool_code>/gi, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -89,5 +97,6 @@ export function plainTextToHtml(value: string): string {
 }
 
 export function renderPreviewHtml(value: string, format: "markdown" | "text" = "markdown"): string {
-  return format === "text" ? plainTextToHtml(value) : markdownToHtml(value);
+  const cleaned = stripAuditorLeakage(value);
+  return format === "text" ? plainTextToHtml(cleaned) : markdownToHtml(cleaned);
 }

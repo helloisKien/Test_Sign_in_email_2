@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { getPublicApiBase } from "@/lib/backend-api";
 import { useAuthMe } from "@/lib/client-auth";
 import { useI18n } from "@/lib/i18n/I18nProvider";
-import { renderPreviewHtml } from "@/lib/markdown-preview";
+import { renderPreviewHtml, stripAuditorLeakage } from "@/lib/markdown-preview";
 import { readResultPayloadForUser } from "@/lib/result-session";
 import type { FeedbackType } from "@/lib/wizard-types";
 import { showToast } from "@/components/ui/Toast";
@@ -42,7 +42,7 @@ export default function ResultPage() {
     const timeout = window.setTimeout(() => {
       const stored = readResultPayloadForUser<ResultPayload>(user?.email || null);
       setPayload(stored);
-      setEditorText((stored?.content || "").replace(/\r/g, ""));
+      setEditorText(stripAuditorLeakage((stored?.content || "").replace(/\r/g, "")));
       setLoading(false);
     }, 0);
     return () => window.clearTimeout(timeout);
