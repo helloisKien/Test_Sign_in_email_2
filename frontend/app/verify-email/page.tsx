@@ -52,8 +52,8 @@ function VerifyEmailContent() {
   }, [token, tokenMissing]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-stone-50 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(251,146,60,0.12),_transparent_18%),linear-gradient(180deg,_#faf7f2_0%,_#f2ede4_100%)] p-4">
+      <div className="w-full max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
         <h1 className="text-center text-2xl font-semibold text-stone-900">Email verification</h1>
         <p className="mt-2 text-center text-sm text-stone-500">Confirming your account now.</p>
 
@@ -96,8 +96,8 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-stone-50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 text-center text-sm text-stone-500 shadow-sm">
+        <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(251,146,60,0.12),_transparent_18%),linear-gradient(180deg,_#faf7f2_0%,_#f2ede4_100%)] p-4">
+          <div className="w-full max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 text-center text-sm text-stone-500 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
             Loading verification...
           </div>
         </div>

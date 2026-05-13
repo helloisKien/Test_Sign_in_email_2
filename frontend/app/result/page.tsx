@@ -220,7 +220,7 @@ export default function ResultPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen px-4 py-10">
+      <main data-guide="result-page" className="min-h-screen px-4 py-10">
         <div className="mx-auto max-w-6xl space-y-4">
           <SkeletonCard lines={2} />
           <div className="grid gap-4 lg:grid-cols-2">
@@ -234,7 +234,7 @@ export default function ResultPage() {
 
   if (!payload) {
     return (
-      <main className="min-h-screen bg-stone-50 px-4 py-10">
+      <main data-guide="result-page" className="min-h-screen bg-stone-50 px-4 py-10">
         <div className="mx-auto max-w-4xl rounded-xl border border-stone-200 bg-white p-6 text-stone-700">
           {t("result.no_payload")}
         </div>
@@ -246,7 +246,10 @@ export default function ResultPage() {
   const previewHtml = renderPreviewHtml(editorText || "", payload.outputFormat === "text" ? "text" : "markdown");
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.12),_transparent_25%),radial-gradient(circle_at_top_right,_rgba(251,146,60,0.1),_transparent_20%),linear-gradient(180deg,_#faf7f2_0%,_#f2ede4_100%)] px-4 py-6 sm:py-8">
+    <main
+      data-guide="result-page"
+      className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.12),_transparent_25%),radial-gradient(circle_at_top_right,_rgba(251,146,60,0.1),_transparent_20%),linear-gradient(180deg,_#faf7f2_0%,_#f2ede4_100%)] px-4 py-6 sm:py-8"
+    >
       <div className="mx-auto max-w-6xl space-y-4">
         <header className="flex flex-col gap-3 rounded-[1.75rem] border border-white/70 bg-white/90 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -258,14 +261,14 @@ export default function ResultPage() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              className="rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-[0.98]"
+              className="rounded-full border border-[#d9dee8] bg-[#ffffff] px-4 py-2.5 text-sm font-bold text-[#111827] shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition-transform hover:border-[#c6cdd9] active:scale-[0.98]"
               onClick={() => router.push("/history")}
             >
               {t("result.back_history")}
             </button>
             <button
               type="button"
-              className="rounded-xl bg-stone-900 px-3 py-2 text-sm font-semibold text-white transition-transform hover:bg-stone-800 active:scale-[0.98]"
+              className="rounded-full bg-[#e67700] px-4 py-2.5 text-sm font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-transform hover:bg-[#c75f00] active:scale-[0.98]"
               onClick={continueInWizard}
             >
               {t("result.continue")}
@@ -274,24 +277,24 @@ export default function ResultPage() {
         </header>
 
         {/* Toolbar — copy, download, PDF */}
-        <section className="flex flex-wrap gap-2 rounded-2xl border border-white/70 bg-white/90 px-4 py-3 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
+        <section className="flex flex-wrap gap-2 rounded-[1.05rem] border border-[#e8ebef] bg-[#fbfbfc] px-4 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
           <button
             type="button"
-            className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+            className="rounded-lg border border-[#d9dee8] bg-white px-3 py-1.5 text-xs font-bold text-[#374151] hover:bg-[#f3f4f6]"
             onClick={() => void copyToClipboard()}
           >
             {copyLabel || t("result.copy_md")}
           </button>
           <button
             type="button"
-            className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+            className="rounded-lg border border-[#d9dee8] bg-white px-3 py-1.5 text-xs font-bold text-[#374151] hover:bg-[#f3f4f6]"
             onClick={downloadMarkdown}
           >
             {t("result.download_md")}
           </button>
           <button
             type="button"
-            className="rounded-lg border border-teal-300 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-100"
+            className="rounded-lg border border-[#8cebdc] bg-[#c8f7ee] px-3 py-1.5 text-xs font-bold text-[#057c73] hover:bg-[#b0f2e5]"
             onClick={() => void downloadPdf()}
           >
             {t("result.download_pdf")}
@@ -299,12 +302,12 @@ export default function ResultPage() {
         </section>
 
         <section className="grid items-stretch gap-4 lg:grid-cols-2">
-          <div className="flex min-h-[22rem] flex-col rounded-[1.75rem] border border-white/70 bg-white/92 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:h-[min(72vh,56rem)]">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t("result.editable")}</p>
+          <div className="flex min-h-[22rem] flex-col rounded-[1.45rem] border border-[#ece9df] bg-white p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:h-[min(72vh,56rem)]">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#647084]">{t("result.editable")}</p>
             <textarea
               value={editorText}
               onChange={(event) => setEditorText(event.target.value)}
-              className="h-full w-full flex-1 rounded-2xl border border-stone-300 bg-white px-4 py-4 text-sm leading-6 text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+              className="h-full w-full flex-1 rounded-2xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-4 text-sm leading-6 text-[#091225] outline-none focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
             />
           </div>
           <div className="flex min-h-[22rem] flex-col rounded-[1.75rem] border border-teal-200 bg-teal-50/90 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:h-[min(72vh,56rem)]">
@@ -316,7 +319,10 @@ export default function ResultPage() {
           </div>
         </section>
 
-        <section className="rounded-[1.75rem] border border-white/70 bg-white/92 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <section
+          data-guide="result-send"
+          className="rounded-[1.75rem] border border-white/70 bg-white/92 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)]"
+        >
           <div className="grid gap-3 md:grid-cols-[14rem_1fr]">
             {isAudit ? (
               <select
@@ -334,7 +340,7 @@ export default function ResultPage() {
               </div>
             )}
             <textarea
-              className="min-h-24 rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
+              className="min-h-24 rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-3 py-2 text-sm outline-none focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
               placeholder={isAudit ? t("result.feedback_ph_audit") : t("result.feedback_ph_gen")}
               value={feedback}
               onChange={(event) => setFeedback(event.target.value)}
@@ -343,7 +349,7 @@ export default function ResultPage() {
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
-              className="rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition-transform hover:bg-teal-800 active:scale-[0.98]"
+              className="rounded-full bg-[#e67700] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-transform hover:bg-[#c75f00] active:scale-[0.98]"
               onClick={() => {
                 if (isAudit) {
                   void sendDecision();

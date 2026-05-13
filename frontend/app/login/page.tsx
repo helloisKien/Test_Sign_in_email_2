@@ -97,10 +97,10 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-stone-50 p-4">
-            <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-                <h1 className="mb-1 text-center text-2xl font-semibold text-stone-900">{t("login.title")}</h1>
-                <p className="mb-6 text-center text-sm text-stone-500">{t("login.subtitle")}</p>
+        <div className="flex min-h-screen items-center justify-center bg-[#fbfaf7] p-4 text-[#091225]">
+            <div className="w-full max-w-md rounded-[1.45rem] border border-[#ece9df] bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+                <h1 className="mb-1 text-center font-sans text-2xl font-black text-[#091225]">{t("login.title")}</h1>
+                <p className="mb-6 text-center text-sm text-[#4b5563]">{t("login.subtitle")}</p>
 
                 {error ? (
                     <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -110,19 +110,23 @@ export default function LoginPage() {
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <div>
-                        <label htmlFor="email" className="mb-1 block text-sm font-medium text-stone-700">{t("login.email")}</label>
+                        <label htmlFor="email" className="mb-1 block text-sm font-medium text-[#374151]">
+                            {t("login.email")}
+                        </label>
                         <input
                             id="email"
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder={t("login.placeholder_email")}
-                            className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                            className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="mb-1 block text-sm font-medium text-stone-700">{t("login.password")}</label>
+                        <label htmlFor="password" className="mb-1 block text-sm font-medium text-[#374151]">
+                            {t("login.password")}
+                        </label>
                         <div className="relative">
                             <input
                                 id="password"
@@ -130,12 +134,12 @@ export default function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder={t("login.placeholder_password")}
-                                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 pr-24 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                                className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 pr-24 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-md bg-stone-50 px-2 py-1 text-xs font-medium text-stone-500 hover:text-stone-700"
+                                className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-md bg-[#fbfbfc] px-2 py-1 text-xs font-medium text-[#647084] hover:text-[#091225]"
                             >
                                 {showPassword ? t("common.hide") : t("common.show")}
                             </button>
@@ -143,7 +147,7 @@ export default function LoginPage() {
                         <div className="mt-2 text-right">
                             <button
                                 type="button"
-                                className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+                                className="text-xs font-bold text-[#e67700] hover:text-[#c75f00]"
                                 onClick={() => {
                                     setShowForgotPassword((prev) => !prev);
                                     setForgotStatus(null);
@@ -157,16 +161,16 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading || googleLoading}
-                        className="mt-2 flex w-full items-center justify-center rounded-xl bg-stone-900 px-4 py-3 font-medium text-white transition-colors hover:bg-stone-800 disabled:opacity-50"
+                        className="mt-2 flex w-full items-center justify-center rounded-full bg-[#e67700] px-4 py-3 font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-colors hover:bg-[#c75f00] disabled:opacity-50"
                     >
                         {loading ? t("login.submitting") : t("login.submit")}
                     </button>
                 </form>
 
                 <div className="my-5 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-stone-200" />
-                    <span className="text-xs font-medium uppercase tracking-[0.2em] text-stone-400">{t("common.or")}</span>
-                    <div className="h-px flex-1 bg-stone-200" />
+                    <div className="h-px flex-1 bg-[#ece9df]" />
+                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#647084]">{t("common.or")}</span>
+                    <div className="h-px flex-1 bg-[#ece9df]" />
                 </div>
 
                 <GoogleSignInButton
@@ -177,23 +181,21 @@ export default function LoginPage() {
                 />
 
                 {showForgotPassword ? (
-                    <section className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4">
-                        <h2 className="text-sm font-semibold text-stone-900">{t("login.reset_title")}</h2>
-                        <p className="mt-1 text-xs text-stone-600">
-                            {t("login.reset_hint")}
-                        </p>
+                    <section className="mt-5 rounded-xl border border-[#ece9df] bg-[#fbfbfc] p-4">
+                        <h2 className="text-sm font-bold text-[#091225]">{t("login.reset_title")}</h2>
+                        <p className="mt-1 text-xs text-[#4b5563]">{t("login.reset_hint")}</p>
                         <form className="mt-3 space-y-3" onSubmit={handleForgotPasswordSubmit}>
                             <input
                                 type="email"
                                 value={forgotEmail}
                                 onChange={(event) => setForgotEmail(event.target.value)}
                                 placeholder={t("login.reset_placeholder")}
-                                className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                                className="w-full rounded-xl border border-[#d9dee8] bg-white px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                             />
                             <button
                                 type="submit"
                                 disabled={forgotLoading}
-                                className="w-full rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+                                className="w-full rounded-xl border border-[#ffd8a8] bg-[#fff4e6] px-4 py-2.5 text-sm font-bold text-[#e67700] hover:bg-[#ffe8cc] disabled:opacity-50"
                             >
                                 {forgotLoading ? t("login.reset_sending") : t("login.reset_send")}
                             </button>
@@ -202,9 +204,9 @@ export default function LoginPage() {
                     </section>
                 ) : null}
 
-                <p className="mt-6 text-center text-sm text-stone-500">
+                <p className="mt-6 text-center text-sm text-[#4b5563]">
                     {t("login.no_account")}{" "}
-                    <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+                    <Link href="/signup" className="font-bold text-[#e67700] hover:text-[#c75f00]">
                         {t("login.signup_link")}
                     </Link>
                 </p>

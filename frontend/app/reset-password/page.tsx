@@ -70,8 +70,8 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-stone-50 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(251,146,60,0.12),_transparent_18%),linear-gradient(180deg,_#faf7f2_0%,_#f2ede4_100%)] p-4">
+      <div className="w-full max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
         <h1 className="text-center text-2xl font-semibold text-stone-900">Set a new password</h1>
         <p className="mt-2 text-center text-sm text-stone-500">
           Use the secure link from your email to choose a new password.
@@ -93,7 +93,7 @@ function ResetPasswordContent() {
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
                 placeholder="At least 8 chars, 1 uppercase, 1 number"
-                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-2xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
               />
             </div>
             <div>
@@ -106,7 +106,7 @@ function ResetPasswordContent() {
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 placeholder="Re-enter password"
-                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-2xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
               />
             </div>
             <button
@@ -119,7 +119,7 @@ function ResetPasswordContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-stone-900 px-4 py-3 font-medium text-white transition-colors hover:bg-stone-800 disabled:opacity-50"
+              className="mt-6 w-full rounded-full bg-[#e67700] px-4 py-3 font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-colors hover:bg-[#c75f00] disabled:opacity-50"
             >
               {loading ? "Updating..." : "Update password"}
             </button>
@@ -152,8 +152,8 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-stone-50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 text-center text-sm text-stone-500 shadow-sm">
+        <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(251,146,60,0.12),_transparent_18%),linear-gradient(180deg,_#faf7f2_0%,_#f2ede4_100%)] p-4">
+          <div className="w-full max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 text-center text-sm text-stone-500 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
             Loading reset form...
           </div>
         </div>

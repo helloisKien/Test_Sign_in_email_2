@@ -15,7 +15,7 @@ export default function AuditorPage() {
 
   if (!userInfo) {
     return (
-      <main className="min-h-screen bg-stone-50 px-4 py-8">
+      <main className="min-h-screen bg-[linear-gradient(180deg,_#fbfaf7_0%,_#f5f3ec_100%)] px-4 py-6">
         <div className="mx-auto max-w-4xl">
           <SkeletonCard lines={5} />
         </div>

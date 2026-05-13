@@ -4,11 +4,12 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuthMe } from "@/lib/client-auth";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { ONBOARDING_GUIDE_OPEN_EVENT } from "@/lib/onboarding-guide";
 
 function FaqLoadingFallback() {
   const { t } = useI18n();
   return (
-    <main className="min-h-screen bg-stone-50 px-4 py-10">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,239,189,0.4),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(200,247,238,0.46),_transparent_22%),linear-gradient(180deg,_#fbfaf7_0%,_#f5f3ec_100%)] px-4 py-10">
       <div className="mx-auto max-w-5xl rounded-2xl border border-stone-200 bg-white p-6 text-center text-sm text-stone-500">
         {t("faq.loading")}
       </div>
@@ -77,12 +78,22 @@ function FaqPageContent() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-50 px-4 py-10">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,239,189,0.4),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(200,247,238,0.46),_transparent_22%),linear-gradient(180deg,_#fbfaf7_0%,_#f5f3ec_100%)] px-4 py-10">
       <div className="mx-auto max-w-5xl space-y-6">
         <header>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">{t("faq.kicker")}</p>
           <h1 className="mt-2 text-3xl font-semibold text-stone-950">{t("faq.title")}</h1>
           <p className="mt-2 max-w-3xl text-sm text-stone-600">{t("faq.intro")}</p>
+          <div className="mt-4 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3">
+            <p className="text-sm text-teal-900">{t("faq.reopen_guide_hint")}</p>
+            <button
+              type="button"
+              className="mt-2 rounded-full bg-[#e67700] px-5 py-2.5 text-sm font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-transform hover:bg-[#c75f00]"
+              onClick={() => window.dispatchEvent(new Event(ONBOARDING_GUIDE_OPEN_EVENT))}
+            >
+              {t("faq.reopen_guide")}
+            </button>
+          </div>
         </header>
 
         {faqSections.map((section) => (
@@ -112,17 +123,17 @@ function FaqPageContent() {
                 value={subject}
                 onChange={(event) => setSubject(event.target.value)}
                 placeholder={t("faq.support_subject_ph")}
-                className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+                className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
               />
               <textarea
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 placeholder={t("faq.support_message_ph")}
-                className="min-h-32 w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+                className="min-h-32 w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
               />
               <button
                 type="button"
-                className="w-full rounded-xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white hover:bg-stone-800 sm:w-auto"
+                className="w-full rounded-full bg-[#e67700] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-transform hover:bg-[#c75f00] sm:w-auto disabled:opacity-50"
                 onClick={() => void submitSupportMessage()}
                 disabled={sending}
               >

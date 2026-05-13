@@ -185,10 +185,10 @@ export default function SignupPage() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-stone-50 p-4">
-            <div className="w-full max-w-lg rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-                <h1 className="mb-1 text-center text-2xl font-semibold text-stone-900">{t("signup.title")}</h1>
-                <p className="mb-6 text-center text-sm text-stone-500">{t("signup.subtitle")}</p>
+        <div className="flex min-h-screen items-center justify-center bg-[#fbfaf7] p-4 text-[#091225]">
+            <div className="w-full max-w-lg rounded-[1.45rem] border border-[#ece9df] bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+                <h1 className="mb-1 text-center font-sans text-2xl font-black text-[#091225]">{t("signup.title")}</h1>
+                <p className="mb-6 text-center text-sm text-[#4b5563]">{t("signup.subtitle")}</p>
 
                 {errors.server ? (
                     <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -212,33 +212,33 @@ export default function SignupPage() {
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <div>
-                        <label htmlFor="fullName" className="mb-1 block text-sm font-medium text-stone-700">{t("signup.full_name")}</label>
+                        <label htmlFor="fullName" className="mb-1 block text-sm font-medium text-[#374151]">{t("signup.full_name")}</label>
                         <input
                             id="fullName"
                             type="text"
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
                             placeholder={t("signup.placeholder_name")}
-                            className={`w-full rounded-xl border px-4 py-3 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 ${errors.fullName ? "border-red-300 bg-red-50" : "border-stone-200 bg-stone-50"}`}
+                            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20 ${errors.fullName ? "border-red-300 bg-red-50" : "border-[#d9dee8] bg-[#fbfbfc]"}`}
                         />
                         {errors.fullName ? <p className="mt-1 text-xs text-red-600">{errors.fullName}</p> : null}
                     </div>
 
                     <div>
-                        <label htmlFor="email" className="mb-1 block text-sm font-medium text-stone-700">{t("signup.email")}</label>
+                        <label htmlFor="email" className="mb-1 block text-sm font-medium text-[#374151]">{t("signup.email")}</label>
                         <input
                             id="email"
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder={t("signup.placeholder_email")}
-                            className={`w-full rounded-xl border px-4 py-3 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 ${errors.email ? "border-red-300 bg-red-50" : "border-stone-200 bg-stone-50"}`}
+                            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20 ${errors.email ? "border-red-300 bg-red-50" : "border-[#d9dee8] bg-[#fbfbfc]"}`}
                         />
                         {errors.email ? <p className="mt-1 text-xs text-red-600">{errors.email}</p> : null}
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="mb-1 block text-sm font-medium text-stone-700">{t("signup.password")}</label>
+                        <label htmlFor="password" className="mb-1 block text-sm font-medium text-[#374151]">{t("signup.password")}</label>
                         <div className="relative">
                             <input
                                 id="password"
@@ -246,12 +246,12 @@ export default function SignupPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder={t("signup.placeholder_pw")}
-                                className={`w-full rounded-xl border px-4 py-3 pr-12 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 ${errors.password ? "border-red-300 bg-red-50" : "border-stone-200 bg-stone-50"}`}
+                                className={`w-full rounded-xl border px-4 py-3 pr-12 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20 ${errors.password ? "border-red-300 bg-red-50" : "border-[#d9dee8] bg-[#fbfbfc]"}`}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-500 hover:text-stone-700"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[#647084] hover:text-[#091225]"
                             >
                                 {showPassword ? t("common.hide") : t("common.show")}
                             </button>
@@ -278,7 +278,7 @@ export default function SignupPage() {
                     </div>
 
                     <div>
-                        <label htmlFor="confirmPassword" className="mb-1 block text-sm font-medium text-stone-700">{t("signup.confirm_password")}</label>
+                        <label htmlFor="confirmPassword" className="mb-1 block text-sm font-medium text-[#374151]">{t("signup.confirm_password")}</label>
                         <div className="relative">
                             <input
                                 id="confirmPassword"
@@ -286,12 +286,12 @@ export default function SignupPage() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 placeholder={t("signup.placeholder_confirm")}
-                                className={`w-full rounded-xl border px-4 py-3 pr-12 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 ${errors.confirmPassword ? "border-red-300 bg-red-50" : "border-stone-200 bg-stone-50"}`}
+                                className={`w-full rounded-xl border px-4 py-3 pr-12 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20 ${errors.confirmPassword ? "border-red-300 bg-red-50" : "border-[#d9dee8] bg-[#fbfbfc]"}`}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowConfirm(!showConfirm)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-500 hover:text-stone-700"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[#647084] hover:text-[#091225]"
                             >
                                 {showConfirm ? t("common.hide") : t("common.show")}
                             </button>
@@ -308,20 +308,20 @@ export default function SignupPage() {
                     </div>
 
                     <div>
-                        <p className="mb-2 text-sm font-medium text-stone-700">{t("signup.role_title")}</p>
+                        <p className="mb-2 text-sm font-medium text-[#374151]">{t("signup.role_title")}</p>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <button
                                 type="button"
                                 onClick={() => setSelectedRole("Teacher")}
                                 className={`rounded-xl border-2 px-4 py-4 text-left transition-all ${selectedRole === "Teacher"
-                                        ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500/20"
-                                        : "border-stone-200 bg-stone-50 hover:border-stone-300"
+                                        ? "border-[#e67700] bg-[#fff4e6] ring-2 ring-[#e67700]/20"
+                                        : "border-[#d9dee8] bg-[#fbfbfc] hover:border-[#c6cdd9]"
                                     }`}
                             >
-                                <span className={`block text-sm font-semibold ${selectedRole === "Teacher" ? "text-indigo-700" : "text-stone-900"}`}>
+                                <span className={`block text-sm font-semibold ${selectedRole === "Teacher" ? "text-[#e67700]" : "text-[#091225]"}`}>
                                     {t("signup.teacher")}
                                 </span>
-                                <span className={`mt-0.5 block text-xs ${selectedRole === "Teacher" ? "text-indigo-500" : "text-stone-500"}`}>
+                                <span className={`mt-0.5 block text-xs ${selectedRole === "Teacher" ? "text-[#c75f00]" : "text-[#647084]"}`}>
                                     {t("signup.teacher_hint")}
                                 </span>
                             </button>
@@ -330,18 +330,17 @@ export default function SignupPage() {
                                 type="button"
                                 onClick={() => setSelectedRole("QA")}
                                 className={`rounded-xl border-2 px-4 py-4 text-left transition-all ${selectedRole === "QA"
-                                        ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20"
-                                        : "border-stone-200 bg-stone-50 hover:border-stone-300"
+                                        ? "border-[#057c73] bg-[#e6fbf9] ring-2 ring-[#057c73]/20"
+                                        : "border-[#d9dee8] bg-[#fbfbfc] hover:border-[#c6cdd9]"
                                     }`}
                             >
-                                <span className={`block text-sm font-semibold ${selectedRole === "QA" ? "text-emerald-700" : "text-stone-900"}`}>
+                                <span className={`block text-sm font-semibold ${selectedRole === "QA" ? "text-[#057c73]" : "text-[#091225]"}`}>
                                     {t("signup.qa")}
                                 </span>
-                                <span className={`mt-0.5 block text-xs ${selectedRole === "QA" ? "text-emerald-500" : "text-stone-500"}`}>
+                                <span className={`mt-0.5 block text-xs ${selectedRole === "QA" ? "text-[#04615a]" : "text-[#647084]"}`}>
                                     {t("signup.qa_hint")}
                                 </span>
                             </button>
-
                         </div>
                         {errors.role ? <p className="mt-1 text-xs text-red-600">{errors.role}</p> : null}
                     </div>
@@ -349,16 +348,16 @@ export default function SignupPage() {
                     <button
                         type="submit"
                         disabled={loading || googleLoading}
-                        className="mt-2 flex w-full items-center justify-center rounded-xl bg-stone-900 px-4 py-3 font-medium text-white transition-colors hover:bg-stone-800 disabled:opacity-50"
+                        className="mt-2 flex w-full items-center justify-center rounded-full bg-[#e67700] px-4 py-3 font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-colors hover:bg-[#c75f00] disabled:opacity-50"
                     >
                         {loading ? t("signup.submitting") : t("signup.submit")}
                     </button>
                 </form>
 
                 <div className="my-5 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-stone-200" />
-                    <span className="text-xs font-medium uppercase tracking-[0.2em] text-stone-400">{t("common.or")}</span>
-                    <div className="h-px flex-1 bg-stone-200" />
+                    <div className="h-px flex-1 bg-[#ece9df]" />
+                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#647084]">{t("common.or")}</span>
+                    <div className="h-px flex-1 bg-[#ece9df]" />
                 </div>
 
                 <GoogleSignInButton
@@ -369,9 +368,9 @@ export default function SignupPage() {
                     onSuccess={(role) => router.replace(getDefaultRouteForRole(role))}
                 />
 
-                <p className="mt-6 text-center text-sm text-stone-500">
+                <p className="mt-6 text-center text-sm text-[#4b5563]">
                     {t("signup.have_account")}{" "}
-                    <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+                    <Link href="/login" className="font-bold text-[#e67700] hover:text-[#c75f00]">
                         {t("signup.signin")}
                     </Link>
                 </p>

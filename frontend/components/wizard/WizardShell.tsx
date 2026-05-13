@@ -13,6 +13,7 @@ import { translate } from "@/lib/i18n/t";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { renderPreviewHtml } from "@/lib/markdown-preview";
 import { saveResultPayload } from "@/lib/result-session";
+import { WIZARD_RESULT_READY_EVENT } from "@/lib/onboarding-guide";
 import type { WizardFlowConfig } from "@/lib/wizard-config";
 import { localizeWizardConfig } from "@/lib/wizard-localization";
 import { useWizardStore } from "@/lib/wizard-store";
@@ -1514,10 +1515,18 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
 
   const hasCurrentStepSnapshot = snapshots.some((snapshot) => snapshot.stepId === currentStepDef.id);
   const isProcessing = busySubmit || uploadBusy;
+
+  // Dispatch event when result is set so the onboarding guide can detect completion
+  useEffect(() => {
+    if (result) {
+      window.dispatchEvent(new Event(WIZARD_RESULT_READY_EVENT));
+    }
+  }, [result]);
+
   return (
-    <div className="min-h-screen px-3 py-6 sm:px-4 lg:px-6 xl:px-8">
-      <div className="mx-auto w-full max-w-[104rem] space-y-5">
-        <section className="rounded-[1.7rem] border border-teal-200 bg-teal-50/90 px-4 py-3 text-sm text-teal-950 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,239,189,0.46),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(200,247,238,0.55),_transparent_24%),linear-gradient(180deg,_#fbfaf7_0%,_#f5f3ec_100%)] px-3 py-4 sm:px-4 sm:py-5 lg:px-6 xl:px-8">
+      <div className="mx-auto w-full max-w-[104rem] space-y-4">
+        <section className="rounded-[1.35rem] border border-teal-200 bg-teal-50/90 px-4 py-3 text-[15px] text-teal-950 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <div className="font-semibold">
             {mode === "generate" ? t("wizard.banner.create_title") : t("wizard.banner.review_title")}
           </div>
@@ -1527,14 +1536,15 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
         </section>
 
         {mode === "audit" && activeReviewLockId ? (
-          <section className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm text-fuchsia-900">
+
+          <section className="rounded-[1.25rem] border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-[15px] text-fuchsia-900">
             <div className="font-semibold">{t("wizard.lock_title")}</div>
             <p className="mt-1 text-xs text-fuchsia-800">{t("wizard.lock_body")}</p>
           </section>
         ) : null}
 
         {resumeLoading && (
-          <section className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          <section className="rounded-[1.25rem] border border-blue-200 bg-blue-50 px-4 py-3 text-[15px] text-blue-900">
             <div className="flex items-center gap-2">
               <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-300 border-t-blue-700" />
               {t("wizard.resume_loading")}
@@ -1543,7 +1553,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
         )}
 
         {resumeBanner && (
-          <section className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3">
+          <section className="rounded-[1.25rem] border border-amber-300 bg-amber-50 px-4 py-3">
             <div className="flex items-center justify-between gap-2">
               <div>
                 <div className="text-sm font-semibold text-amber-900">
@@ -1582,13 +1592,16 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
           />
         ) : null}
 
-        <section className="rounded-[1.7rem] border border-white/70 bg-white/92 px-4 py-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <section
+          data-guide="wizard-queue"
+          className="rounded-[1.45rem] border border-[#ece9df] bg-white/92 px-4 py-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)]"
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="text-sm font-semibold text-slate-900">
+              <div className="font-sans text-[1.1rem] font-black text-slate-900">
                 {mode === "audit" ? t("wizard.queue_audit_title") : t("wizard.queue_gen_title")}
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="mt-0.5 text-sm leading-6 text-slate-500">
                 {mode === "audit" ? t("wizard.queue_audit_hint") : t("wizard.queue_gen_hint")}
               </p>
             </div>
@@ -1611,7 +1624,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                 <button
                   key={submission.request_id}
                   type="button"
-                  className={`rounded-[1.35rem] border px-4 py-4 text-left text-sm transition-colors ${
+                  className={`rounded-[1.2rem] border px-4 py-4 text-left text-[15px] transition-colors ${
                     activeAuditSubmission?.request_id === submission.request_id || reviewingRequestId === submission.request_id
                       ? "border-teal-300 bg-teal-50"
                       : "border-slate-200 bg-slate-50 hover:border-teal-400 hover:bg-teal-50"
@@ -1662,12 +1675,15 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
           </div>
         </section>
 
-        <header className="rounded-[1.85rem] border border-white/70 bg-white/92 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <header
+          data-guide="wizard-step-order"
+          className="rounded-[1.45rem] border border-[#ece9df] bg-white/92 p-4 sm:p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]"
+        >
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{roleLabel}</div>
-              <h1 className="mt-1 text-2xl font-semibold text-slate-950">{displayConfig.title}</h1>
-              <p className="mt-1 text-sm text-slate-600">{displayConfig.subtitle}</p>
+              <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">{roleLabel}</div>
+              <h1 className="mt-1 font-sans text-[1.85rem] font-black text-slate-950 sm:text-[2.1rem]">{displayConfig.title}</h1>
+              <p className="mt-1 text-[1rem] leading-7 text-slate-600">{displayConfig.subtitle}</p>
             </div>
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between xl:w-auto">
               {userInfo?.role === "Admin" ? (
@@ -1723,7 +1739,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                 <button
                   type="button"
                   key={step.id}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${currentStep === index ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-600"
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${currentStep === index ? "bg-[#111827] text-white" : "bg-slate-100 text-slate-600"
                     }`}
                   onClick={() => store.setCurrentStep(index)}
                 >
@@ -1734,14 +1750,15 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
           </div>
         </header>
 
-        <div className="grid items-start gap-5">
+        <div className="grid items-start gap-4">
           <section
-            className="min-w-0 space-y-4 rounded-[1.85rem] border border-white/70 bg-white/92 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]"
+            data-guide="wizard-fields"
+            className="min-w-0 space-y-4 rounded-[1.45rem] border border-[#ece9df] bg-white/92 p-4 sm:p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]"
           >
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">{currentStepDef.title}</h2>
-                <p className="text-sm text-slate-600">{currentStepDef.description}</p>
+                <h2 className="font-sans text-[1.4rem] font-black text-slate-900">{currentStepDef.title}</h2>
+                <p className="mt-1 text-[1rem] leading-7 text-slate-600">{currentStepDef.description}</p>
               </div>
             </div>
 
@@ -1845,8 +1862,8 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
 
                 {activeAuditSubmission ? (
                   <>
-                    <div className="grid gap-3 md:grid-cols-3">
-                      <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      <div className="rounded-[1.1rem] border border-stone-200 bg-stone-50 p-4">
                         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
                           {t("wizard.author_card")}
                         </div>
@@ -1857,7 +1874,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                           <div className="mt-1 break-all text-xs text-stone-500">{activeAuditSubmission.teacher_email}</div>
                         ) : null}
                       </div>
-                      <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                      <div className="rounded-[1.1rem] border border-stone-200 bg-stone-50 p-4">
                         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
                           {t("wizard.course_code_card")}
                         </div>
@@ -1865,7 +1882,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                           {activeAuditSubmission.course_code || t("common.na")}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                      <div className="rounded-[1.1rem] border border-stone-200 bg-stone-50 p-4">
                         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
                           {t("wizard.course_name_card")}
                         </div>
@@ -1957,7 +1974,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3">
               <button
                 type="button"
-                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-transform hover:bg-slate-50 active:scale-[0.98] disabled:opacity-40"
+                className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-transform hover:bg-slate-50 active:scale-[0.98] disabled:opacity-40"
                 disabled={currentStep === 0}
                 onClick={() => store.setCurrentStep(Math.max(0, currentStep - 1))}
               >
@@ -1965,7 +1982,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
               </button>
               <button
                 type="button"
-                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-transform hover:bg-slate-50 active:scale-[0.98] disabled:opacity-40"
+                className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-transform hover:bg-slate-50 active:scale-[0.98] disabled:opacity-40"
                 disabled={currentStep >= stepDefs.length - 1}
                 onClick={() => store.setCurrentStep(Math.min(stepDefs.length - 1, currentStep + 1))}
               >
@@ -1973,7 +1990,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
               </button>
               <button
                 type="button"
-                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-transform hover:bg-slate-50 active:scale-[0.98] disabled:opacity-40"
+                className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-transform hover:bg-slate-50 active:scale-[0.98] disabled:opacity-40"
                 disabled={!hasCurrentStepSnapshot}
                 onClick={() => {
                   store.restoreLatestSnapshotForStep(currentStepDef.id);
@@ -1984,7 +2001,8 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
               </button>
               <button
                 type="button"
-                className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow transition-transform hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-400"
+                data-guide="wizard-submit-main"
+                className="rounded-full bg-[#e67700] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_24px_rgba(230,119,0,0.22)] transition-transform hover:bg-[#c75f00] active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-400"
                 disabled={busySubmit}
                 onClick={() => void submitMainFlow()}
               >
@@ -2007,7 +2025,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
           </section>
 
           {result ? (
-            <section className="min-w-0 space-y-4 rounded-[1.85rem] border border-teal-200 bg-teal-50 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+            <section className="min-w-0 space-y-4 rounded-[1.45rem] border border-teal-200 bg-teal-50 p-4 sm:p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="text-sm font-semibold text-teal-950">
@@ -2110,9 +2128,11 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
 
       {isProcessing ? (
         <div className="pointer-events-none fixed bottom-6 right-6 z-[65]">
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-4 py-2 text-xs font-semibold text-slate-700 shadow-[0_12px_30px_rgba(15,23,42,0.18)] backdrop-blur">
-            <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" />
-            {uploadBusy ? t("wizard.uploading") : t("common.working")}
+          <div className="flex items-center gap-3 rounded-2xl border-2 border-teal-300 bg-slate-950/95 px-5 py-3 text-sm font-semibold text-white shadow-[0_20px_48px_rgba(15,23,42,0.45)] ring-2 ring-teal-200/70 backdrop-blur">
+            <span className="inline-block h-5 w-5 animate-spin rounded-full border-[3px] border-teal-200/70 border-t-white drop-shadow-[0_0_10px_rgba(45,212,191,0.85)]" />
+            <span className="drop-shadow-[0_1px_0_rgba(15,23,42,0.8)]">
+              {uploadBusy ? t("wizard.uploading") : t("common.working")}
+            </span>
           </div>
         </div>
       ) : null}
@@ -2154,6 +2174,6 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
         }}
         onCancel={() => setConfirmQaOpen(false)}
       />
-    </div>
+    </main>
   );
 }

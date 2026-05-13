@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 import { ToastContainer } from "@/components/ui/Toast";
+import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { I18nProvider, useI18n } from "@/lib/i18n/I18nProvider";
 import { usePageTitle } from "@/lib/usePageTitle";
 
@@ -44,6 +45,7 @@ export function ClientAppShell({ children }: { children: React.ReactNode }) {
       <HtmlLangSync />
       <RouteTitleSync />
       {children}
+      <OnboardingGuide />
       <ToastContainer />
     </I18nProvider>
   );

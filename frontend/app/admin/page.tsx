@@ -623,7 +623,7 @@ export default function AdminPage() {
   const auditRuntimeSamples = safeNumber(dashboard?.ai_observability?.avg_runtime_ms?.audit_samples);
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(6,182,212,0.16),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(249,115,22,0.2),_transparent_24%),linear-gradient(180deg,_#fff7ed_0%,_#f8fafc_52%,_#eef2ff_100%)] px-4 py-6">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,239,189,0.4),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(200,247,238,0.46),_transparent_22%),linear-gradient(180deg,_#fbfaf7_0%,_#f5f3ec_100%)] px-4 py-6">
       <div className="mx-auto max-w-[1500px] space-y-4">
         <header className="rounded-[1.6rem] border border-white/70 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -638,7 +638,7 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => void loadAdminData()}
-                className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+                className="rounded-full border border-[#d9dee8] bg-white px-4 py-2 text-sm font-bold text-[#091225] shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition-transform hover:border-[#c6cdd9] active:scale-[0.98]"
               >
                 {t("admin.refresh")}
               </button>

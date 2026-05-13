@@ -284,22 +284,22 @@ function HistoryPageContent() {
   );
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(15,118,110,0.12),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(249,115,22,0.1),_transparent_22%),linear-gradient(180deg,_#f8f4ed_0%,_#f3ece0_100%)] px-4 py-8">
-      <div className="mx-auto max-w-6xl space-y-5">
-        <header className="rounded-[1.75rem] border border-white/60 bg-white/90 px-5 py-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,239,189,0.4),_transparent_20%),radial-gradient(circle_at_top_right,_rgba(200,247,238,0.46),_transparent_22%),linear-gradient(180deg,_#fbfaf7_0%,_#f5f3ec_100%)] px-4 py-5 sm:py-6">
+      <div className="mx-auto max-w-6xl space-y-4">
+        <header className="rounded-[1.45rem] border border-[#ece9df] bg-white/90 px-5 py-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">{t("history.kicker")}</p>
-              <h1 className="mt-2 text-3xl font-semibold text-stone-950">{t("history.title")}</h1>
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#647084]">{t("history.kicker")}</p>
+              <h1 className="mt-2 font-sans text-[2rem] font-black text-stone-950 sm:text-[2.35rem]">{t("history.title")}</h1>
               {user ? (
-                <p className="mt-1 text-sm text-stone-500">
+                <p className="mt-1 text-[1rem] text-stone-500">
                   {user.email} | <span className="capitalize">{user.role}</span>
                 </p>
               ) : null}
             </div>
             <button
               type="button"
-              className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-800 hover:bg-teal-100"
+              className="rounded-full border border-[#d9dee8] bg-[#ffffff] px-4 py-2.5 text-sm font-bold text-[#111827] shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition-transform hover:border-[#c6cdd9] active:scale-[0.98]"
               onClick={() => void loadHistory()}
             >
               {t("common.refresh")}
@@ -313,7 +313,10 @@ function HistoryPageContent() {
           </div>
         ) : null}
 
-        <section className="rounded-[1.75rem] border border-white/60 bg-white/90 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+        <section
+          data-guide="history-filters"
+          className="rounded-[1.45rem] border border-[#ece9df] bg-white/90 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur"
+        >
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{t("history.filters")}</div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div>
@@ -324,7 +327,7 @@ function HistoryPageContent() {
                 id="filter-subject"
                 type="text"
                 placeholder={t("history.subject_ph")}
-                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-3 py-2.5 text-sm text-[#091225] outline-none focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                 value={filterSubject}
                 onChange={(event) => {
                   setPage(0);
@@ -339,7 +342,7 @@ function HistoryPageContent() {
               </label>
               <select
                 id="filter-status"
-                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-3 py-2.5 text-sm text-[#091225] outline-none focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                 value={filterStatus}
                 onChange={(event) => {
                   setPage(0);
@@ -363,7 +366,7 @@ function HistoryPageContent() {
               <input
                 id="filter-date-from"
                 type="date"
-                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-3 py-2.5 text-sm text-[#091225] outline-none focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                 value={filterDateFrom}
                 onChange={(event) => {
                   setPage(0);
@@ -379,7 +382,7 @@ function HistoryPageContent() {
               <input
                 id="filter-date-to"
                 type="date"
-                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-3 py-2.5 text-sm text-[#091225] outline-none focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                 value={filterDateTo}
                 onChange={(event) => {
                   setPage(0);
@@ -425,7 +428,7 @@ function HistoryPageContent() {
         </section>
 
         {isAdmin ? (
-          <section className="rounded-[1.75rem] border border-white/60 bg-white/90 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+          <section className="rounded-[1.45rem] border border-[#ece9df] bg-white/90 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="text-sm font-semibold text-stone-950">{t("history.bulk_title")}</div>
@@ -461,7 +464,7 @@ function HistoryPageContent() {
           {loading ? (
             <SkeletonGrid cards={6} />
           ) : items.length === 0 ? (
-            <div className="rounded-[1.75rem] border border-white/60 bg-white/90 p-6 text-center shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+              <div className="rounded-[1.45rem] border border-[#ece9df] bg-white/90 p-5 text-center shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
               <p className="text-stone-500">{t("history.empty")}</p>
               <p className="mt-1 text-xs text-stone-400">{t("history.empty_hint")}</p>
             </div>
@@ -472,7 +475,7 @@ function HistoryPageContent() {
               return (
                 <article
                   key={item.request_id}
-                  className={`rounded-[1.75rem] border bg-white/92 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] transition-all ${
+                  className={`rounded-[1.45rem] border bg-white/92 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] transition-all ${
                     highlight === item.request_id
                       ? "border-teal-400 ring-2 ring-teal-200"
                       : isSelected
@@ -496,7 +499,7 @@ function HistoryPageContent() {
                         ) : null}
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg font-semibold text-stone-950">{item.course_title || t("untitled_syllabus")}</h3>
+                            <h3 className="font-sans text-[1.3rem] font-black text-stone-950">{item.course_title || t("untitled_syllabus")}</h3>
                             {statusBadge(item.status, t)}
                           </div>
                           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-500">
@@ -532,7 +535,7 @@ function HistoryPageContent() {
                       ) : null}
                     </div>
 
-                    <div className="w-full shrink-0 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 lg:w-64">
+                    <div className="w-full shrink-0 rounded-[1.1rem] border border-stone-200 bg-stone-50 px-4 py-3 lg:w-64">
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t("history.timeline")}</p>
                       <div className="mt-2 space-y-1 text-sm text-stone-700">
                         <p>
@@ -560,14 +563,14 @@ function HistoryPageContent() {
                   <div className="mt-4 flex flex-wrap gap-2 border-t border-stone-100 pt-4">
                     <button
                       type="button"
-                      className="rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                      className="rounded-full border border-[#d9dee8] bg-[#ffffff] px-3 py-2 text-xs font-bold text-[#111827] hover:bg-[#f3f4f6]"
                       onClick={() => void openResult(item)}
                     >
                       {t("history.view_result")}
                     </button>
                     <button
                       type="button"
-                      className="rounded-xl bg-teal-700 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-800"
+                      className="rounded-full bg-[#e67700] px-3 py-2 text-xs font-bold text-white hover:bg-[#c75f00]"
                       onClick={() => void continueInWizard(item)}
                     >
                       {t("history.continue_wizard")}
@@ -575,7 +578,7 @@ function HistoryPageContent() {
                     {isAdmin ? (
                       <button
                         type="button"
-                        className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                        className="rounded-full border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
                         onClick={() => setPendingDelete(item)}
                         disabled={deletingRequestId === item.request_id}
                       >
@@ -596,7 +599,7 @@ function HistoryPageContent() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-40"
+                className="rounded-lg border border-[#d9dee8] bg-[#ffffff] px-3 py-1.5 font-bold text-[#111827] shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition-transform hover:border-[#c6cdd9] disabled:opacity-40"
                 onClick={() => setPage((current) => Math.max(0, current - 1))}
                 disabled={page === 0}
               >
@@ -604,7 +607,7 @@ function HistoryPageContent() {
               </button>
               <button
                 type="button"
-                className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-40"
+                className="rounded-lg border border-[#d9dee8] bg-[#ffffff] px-3 py-1.5 font-bold text-[#111827] shadow-[0_4px_12px_rgba(15,23,42,0.08)] transition-transform hover:border-[#c6cdd9] disabled:opacity-40"
                 onClick={() => setPage((current) => current + 1)}
                 disabled={!hasMore}
               >
@@ -651,7 +654,7 @@ function HistoryPageContent() {
 
 function HistoryLoadingFallback() {
   return (
-    <main className="min-h-screen bg-stone-50 px-4 py-8">
+    <main className="min-h-screen bg-[linear-gradient(180deg,_#fbfaf7_0%,_#f5f3ec_100%)] px-4 py-6">
       <div className="mx-auto max-w-6xl">
         <SkeletonGrid cards={6} />
       </div>

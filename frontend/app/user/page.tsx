@@ -216,7 +216,7 @@ export default function UserPage() {
                           user.fullName?.trim().charAt(0).toUpperCase() || "U"
                         )}
                       </div>
-                      <label className="cursor-pointer rounded-xl border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100">
+                      <label className="cursor-pointer rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-3 py-2 text-xs font-bold text-[#091225] hover:bg-[#f3f4f6]">
                         {uploadingAvatar ? t("user.uploading_avatar") : t("user.choose_avatar")}
                         <input
                           type="file"
@@ -247,7 +247,10 @@ export default function UserPage() {
                 </div>
               </section>
 
-              <section className="rounded-[1.8rem] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+              <section
+                data-guide="user-editable"
+                className="rounded-[1.8rem] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]"
+              >
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t("user.editable")}</p>
@@ -255,7 +258,7 @@ export default function UserPage() {
                   </div>
                   <button
                     type="button"
-                    className="rounded-xl bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800 disabled:opacity-50"
+                    className="rounded-full bg-[#e67700] px-6 py-2.5 text-sm font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-transform hover:bg-[#c75f00] disabled:opacity-50"
                     onClick={() => void saveProfile()}
                     disabled={saving}
                   >
@@ -265,9 +268,9 @@ export default function UserPage() {
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2">
-                    <span className="text-sm font-medium text-stone-700">{t("user.employee_id")}</span>
+                    <span className="text-sm font-medium text-[#374151]">{t("user.employee_id")}</span>
                     <input
-                      className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
+                      className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                       value={form.employeeId}
                       onChange={(event) => setForm((current) => ({ ...current, employeeId: event.target.value }))}
                       placeholder={t("user.ph_employee")}
@@ -275,9 +278,9 @@ export default function UserPage() {
                   </label>
 
                   <label className="grid gap-2">
-                    <span className="text-sm font-medium text-stone-700">{t("user.phone")}</span>
+                    <span className="text-sm font-medium text-[#374151]">{t("user.phone")}</span>
                     <input
-                      className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
+                      className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                       value={form.phoneNumber}
                       onChange={(event) => setForm((current) => ({ ...current, phoneNumber: event.target.value }))}
                       placeholder={t("user.ph_phone")}
@@ -285,9 +288,9 @@ export default function UserPage() {
                   </label>
 
                   <label className="grid gap-2 sm:col-span-2">
-                    <span className="text-sm font-medium text-stone-700">{t("user.department")}</span>
+                    <span className="text-sm font-medium text-[#374151]">{t("user.department")}</span>
                     <input
-                      className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
+                      className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                       value={form.department}
                       onChange={(event) => setForm((current) => ({ ...current, department: event.target.value }))}
                       placeholder={t("user.ph_department")}
@@ -296,9 +299,9 @@ export default function UserPage() {
 
                   {user.role === "Teacher" ? (
                     <label className="grid gap-2 sm:col-span-2">
-                      <span className="text-sm font-medium text-stone-700">{t("user.teaching_subject")}</span>
+                      <span className="text-sm font-medium text-[#374151]">{t("user.teaching_subject")}</span>
                       <input
-                        className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15"
+                        className="w-full rounded-xl border border-[#d9dee8] bg-[#fbfbfc] px-4 py-3 text-sm text-[#091225] outline-none transition-colors placeholder:text-[#647084] focus:border-[#e67700] focus:ring-2 focus:ring-[#e67700]/20"
                         value={form.teachingSubject}
                         onChange={(event) => setForm((current) => ({ ...current, teachingSubject: event.target.value }))}
                         placeholder={t("user.ph_subject")}

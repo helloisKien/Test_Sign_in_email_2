@@ -316,6 +316,63 @@ html[data-theme="dark"] header.sticky {
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.9)) !important;
 }
 
+html[data-theme="dark"] .home-refactor {
+  background:
+    radial-gradient(circle at 80% 6%, rgba(20, 184, 166, 0.13), transparent 28%),
+    linear-gradient(180deg, #07111f 0%, #0b1526 42%, #0f172a 100%) !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .home-refactor h1,
+html[data-theme="dark"] .home-refactor h2,
+html[data-theme="dark"] .home-refactor h3 {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .home-refactor p {
+  color: #d7e2ee !important;
+}
+
+html[data-theme="dark"] .home-refactor .text-\[\#df6f00\],
+html[data-theme="dark"] .home-refactor .text-\[\#e66f00\],
+html[data-theme="dark"] .home-refactor .text-\[\#d64f00\],
+html[data-theme="dark"] .home-refactor .text-\[\#c46100\] {
+  color: #fb923c !important;
+}
+
+html[data-theme="dark"] .home-refactor .text-\[\#647084\],
+html[data-theme="dark"] .home-refactor .text-\[\#6b7280\] {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .home-refactor .text-\[\#091225\],
+html[data-theme="dark"] .home-refactor .text-\[\#111827\] {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .home-refactor .text-\[\#334155\],
+html[data-theme="dark"] .home-refactor .text-\[\#374151\],
+html[data-theme="dark"] .home-refactor .text-\[\#4b5563\],
+html[data-theme="dark"] .home-refactor .text-\[\#5b6472\] {
+  color: #d7e2ee !important;
+}
+
+html[data-theme="dark"] .home-refactor .home-surface,
+html[data-theme="dark"] .home-refactor .home-muted,
+html[data-theme="dark"] .home-refactor .home-footer {
+  border-color: rgba(100, 116, 139, 0.38) !important;
+  background: rgba(15, 23, 42, 0.78) !important;
+}
+
+html[data-theme="dark"] .home-refactor .home-card {
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  background: rgba(30, 41, 59, 0.86) !important;
+}
+
+html[data-theme="dark"] .home-refactor .home-feature {
+  color: #f8fafc !important;
+}
+
 html[data-theme="dark"] .text-teal-900,
 html[data-theme="dark"] .text-teal-800,
 html[data-theme="dark"] .text-teal-700,

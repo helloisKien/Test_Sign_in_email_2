@@ -30,10 +30,10 @@ type NotificationItem = {
 };
 
 function linkClass(active: boolean): string {
-  return `rounded-xl px-3 py-2 text-sm font-semibold transition ${
+  return `rounded-full px-4 py-2.5 text-sm font-bold tracking-normal transition ${
     active
-      ? "bg-stone-900 text-white"
-      : "text-stone-600 hover:bg-stone-100 hover:text-stone-950"
+      ? "bg-[#111827] text-white shadow-[0_6px_16px_rgba(15,23,42,0.14)]"
+      : "text-stone-700 hover:bg-[#f3f4f6] hover:text-stone-950"
   }`;
 }
 
@@ -261,21 +261,25 @@ export function AppNav() {
   return (
     <header
       ref={navRef}
-      className="sticky top-0 z-40 border-b border-white/50 bg-[linear-gradient(180deg,_rgba(255,255,255,0.97),_rgba(252,249,244,0.9))] backdrop-blur"
+      data-guide="main-navbar"
+      className="sticky top-0 z-40 border-b border-[#ece9df] bg-[rgba(251,250,247,0.92)] backdrop-blur"
     >
-      <nav className="mx-auto max-w-7xl px-4 py-3">
+      <nav className="mx-auto max-w-7xl px-4 py-3.5">
         <div className="flex items-center justify-between gap-3">
-          <Link href="/" className="min-w-0 text-base font-semibold tracking-[0.01em] text-stone-950 sm:text-xl">
-            <span className="font-brand block whitespace-nowrap pb-0.5 italic leading-[1.22] [text-shadow:0_1px_0_rgba(255,255,255,0.8),0_6px_14px_rgba(15,23,42,0.16)]">
-              {t("nav.brand")}
-            </span>
+          <Link href="/" className="flex min-w-0 items-center gap-3 text-base font-black tracking-normal text-[#e66f00] sm:text-xl">
+            <svg className="h-5 w-5 shrink-0 text-stone-950" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3L5 5.8V11c0 4.2 2.8 7.8 7 9.2 4.2-1.4 7-5 7-9.2V5.8L12 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              <path d="M9.4 12l1.7 1.7 3.6-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="truncate">{t("nav.brand")}</span>
           </Link>
 
-          <div className="hidden flex-1 items-center justify-center gap-1 lg:flex">
+          <div data-guide="main-navbar-links" className="hidden flex-1 items-center justify-center gap-2 lg:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
+                data-guide={workspaceLink && link.href === workspaceLink.href ? "workspace-link" : undefined}
                 className={linkClass(isActivePath(pathname, link.href))}
                 onMouseEnter={() => router.prefetch(link.href)}
               >
@@ -290,7 +294,7 @@ export function AppNav() {
                 <button
                   type="button"
                   ref={notificationButtonRef}
-                  className="relative rounded-xl border border-stone-200 bg-white/90 p-2 text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+                  className="relative rounded-full border border-[#e0e4ea] bg-white/90 p-2.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"
                   onClick={() => {
                     setShowNotifications((value) => !value);
                     setShowAccountMenu(false);
@@ -368,7 +372,7 @@ export function AppNav() {
             <div className="relative" ref={accountRef}>
               <button
                 type="button"
-                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-white text-sm font-semibold text-stone-700 shadow-sm hover:border-teal-300"
+                className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[#e0e4ea] bg-white text-sm font-bold text-stone-700 shadow-sm hover:border-[#d8b16b]"
                 onClick={() => {
                   setShowAccountMenu((value) => !value);
                   setShowNotifications(false);
@@ -469,7 +473,8 @@ export function AppNav() {
 
             <button
               type="button"
-              className="rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50 lg:hidden"
+              data-guide="mobile-menu-toggle"
+              className="rounded-full border border-[#e0e4ea] bg-white px-3.5 py-2.5 text-sm font-bold text-stone-700 hover:bg-stone-50 lg:hidden"
               onClick={() => setMobileOpen((value) => !value)}
               aria-expanded={mobileOpen}
               aria-label={t("nav.toggle_menu")}
@@ -494,7 +499,10 @@ export function AppNav() {
         </div>
 
         {mobileOpen ? (
-          <div className="mt-3 space-y-3 rounded-3xl border border-stone-200 bg-white/95 p-4 shadow-[0_20px_50px_rgba(15,23,42,0.12)] lg:hidden">
+          <div
+            data-guide="mobile-nav-menu"
+            className="mt-3 space-y-3 rounded-3xl border border-stone-200 bg-white/95 p-4 shadow-[0_20px_50px_rgba(15,23,42,0.12)] lg:hidden"
+          >
             {user ? (
               <div className="rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3">
                 <p className="truncate text-sm font-semibold text-stone-900">{user.fullName}</p>
@@ -506,6 +514,7 @@ export function AppNav() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  data-guide={workspaceLink && link.href === workspaceLink.href ? "workspace-link" : undefined}
                   className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
                     isActivePath(pathname, link.href)
                       ? "border-stone-900 bg-stone-900 text-white"
