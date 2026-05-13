@@ -165,6 +165,7 @@ export const STRINGS_EN: Record<string, string> = {
   "history.started": "Started:",
   "history.reviewed": "Reviewed:",
   "history.view_result": "View Result",
+  "history.edit_with_qa": "Edit with QA feedback",
   "history.continue_wizard": "Continue in Wizard",
   "history.delete_session": "Delete Session",
   "history.showing": "Showing {n} session(s)",
@@ -503,6 +504,7 @@ export const STRINGS_VI: Record<string, string> = {
   "history.started": "Bắt đầu:",
   "history.reviewed": "Đã đánh giá:",
   "history.view_result": "Xem kết quả",
+  "history.edit_with_qa": "Chỉnh sửa theo QA",
   "history.continue_wizard": "Tiếp tục chỉnh sửa",
   "history.delete_session": "Xóa phiên",
   "history.showing": "Hiển thị {n} phiên",
@@ -716,6 +718,8 @@ const WIZARD_EN: Record<string, string> = {
   "wizard.select_submission": "Select a submitted syllabus above to preview its source and start your QA review.",
   "wizard.result_generated": "Generated syllabus",
   "wizard.result_qa": "QA review result",
+  "wizard.qa_report_panel_title": "QA report (read-only)",
+  "wizard.qa_report_panel_empty": "No stored QA report for this session yet.",
   "wizard.fallback": "Fallback:",
   "wizard.submit_qa_section": "Submit for QA",
   "wizard.send_decision_section": "Send decision to teacher",
@@ -806,6 +810,8 @@ const WIZARD_VI: Record<string, string> = {
   "wizard.select_submission": "Chọn một đề cương đã gửi để xem nội dung và bắt đầu đánh giá.",
   "wizard.result_generated": "Bản đề cương đã tạo",
   "wizard.result_qa": "Kết quả đánh giá QA",
+  "wizard.qa_report_panel_title": "Báo cáo QA (chỉ đọc)",
+  "wizard.qa_report_panel_empty": "Chưa có báo cáo QA đầy đủ cho phiên này.",
   "wizard.fallback": "Phương án thay thế:",
   "wizard.submit_qa_section": "Gửi QA",
   "wizard.send_decision_section": "Gửi phản hồi cho giảng viên",
@@ -1063,6 +1069,39 @@ const RESULT_EN: Record<string, string> = {
   "result.err_send_decision": "Could not send the decision.",
   "result.ok_decision": "Decision sent to the teacher.",
 };
+
+const REGENERATE_EN: Record<string, string> = {
+  "regenerate.kicker": "QA revision",
+  "regenerate.title": "Revise syllabus with QA report",
+  "regenerate.col_syllabus": "Editable content",
+  "regenerate.col_qa": "QA review content",
+  "regenerate.hitl_btn": "Apply QA suggestions",
+  "regenerate.hitl_hint":
+    "Uses the full QA report stored for this session on the server (not limited by feedback length). You can still edit the syllabus on the left before sending to QA again.",
+  "regenerate.remediation_snippet": "Extracted “specific remediation” (for reference)",
+  "regenerate.err_submission": "Could not load this session.",
+  "regenerate.err_hitl": "Could not apply suggestions right now.",
+  "regenerate.ok_hitl": "Syllabus updated from QA suggestions.",
+  "regenerate.hitl_pointer_feedback":
+    "Apply revisions using the full QA review report stored on the server for this request (see workflow.qa_review_markdown).",
+};
+
+const REGENERATE_VI: Record<string, string> = {
+  "regenerate.kicker": "Chỉnh sửa theo QA",
+  "regenerate.title": "Hiệu chỉnh đề cương theo báo cáo QA",
+  "regenerate.col_syllabus": "Nội dung chỉnh sửa",
+  "regenerate.col_qa": "Nội dung QA review",
+  "regenerate.hitl_btn": "Sửa theo góp ý",
+  "regenerate.hitl_hint":
+    "Hệ thống dùng toàn bộ báo cáo QA đã lưu cho phiên này trên server (không bị giới hạn độ dài feedback). Bạn vẫn có thể chỉnh đề cương ở cột trái trước khi gửi QA lại.",
+  "regenerate.remediation_snippet": "Trích “Đề xuất khắc phục cụ thể” (tham khảo)",
+  "regenerate.err_submission": "Không tải được phiên làm việc này.",
+  "regenerate.err_hitl": "Chưa áp dụng được góp ý. Thử lại sau.",
+  "regenerate.ok_hitl": "Đã cập nhật đề cương theo góp ý QA.",
+  "regenerate.hitl_pointer_feedback":
+    "Áp dụng chỉnh sửa theo toàn bộ báo cáo QA đã lưu trên server cho phiên này (xem workflow.qa_review_markdown).",
+};
+
 const RESULT_VI: Record<string, string> = {
   "result.kicker_audit": "Kết quả QA",
   "result.kicker_gen": "Đề cương đã tạo",
@@ -1229,6 +1268,7 @@ const ADMIN_VI: Record<string, string> = {
 };
 
 mergeWizardStrings(STRINGS_EN, STRINGS_VI, RESULT_EN, RESULT_VI);
+mergeWizardStrings(STRINGS_EN, STRINGS_VI, REGENERATE_EN, REGENERATE_VI);
 mergeWizardStrings(STRINGS_EN, STRINGS_VI, USER_EN, USER_VI);
 mergeWizardStrings(STRINGS_EN, STRINGS_VI, ADMIN_EN, ADMIN_VI);
 

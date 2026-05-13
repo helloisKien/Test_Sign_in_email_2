@@ -26,6 +26,7 @@ function RouteTitleSync() {
     "/auditor": t("wizloc.audit.title"),
     "/history": t("history.title"),
     "/result": t("result.default_title"),
+    "/regenerate": t("regenerate.title"),
     "/user": t("user.title"),
     "/admin": t("admin.title"),
     "/admin/support": t("admin.support_inbox"),

@@ -253,15 +253,6 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="home-footer border-t border-[#e8ebef] bg-[#f6f7f9] px-5 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm tracking-normal text-[#6b7280] sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3 font-black text-[#e66f00]">
-            <ShieldIcon className="h-5 w-5 text-stone-950" />
-            <span>{t("home.footer_brand")}</span>
-          </div>
-          <p>{t("home.footer_copy")}</p>
-        </div>
-      </footer>
     </main>
   );
 }

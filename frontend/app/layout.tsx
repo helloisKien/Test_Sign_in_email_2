@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Be_Vietnam_Pro, Dancing_Script, Merriweather, Playwrite_GB_S } from "next/font/google";
 import { AppNav } from "@/components/AppNav";
+import { AppFooter } from "@/components/AppFooter";
 import { ClientAppShell } from "@/components/ClientAppShell";
 import "./globals.css";
 
@@ -63,6 +64,7 @@ export default function RootLayout({
         <ClientAppShell>
           <AppNav />
           {children}
+          <AppFooter />
         </ClientAppShell>
       </body>
     </html>

@@ -257,7 +257,10 @@ export function OnboardingGuide() {
 
   // Reset wizardResultReady flag when moving to a different step
   useEffect(() => {
-    setWizardResultReady(false);
+    const handle = window.setTimeout(() => {
+      setWizardResultReady(false);
+    }, 0);
+    return () => window.clearTimeout(handle);
   }, [clampedStepIndex]);
 
   // Determine whether this is a submit step that should be blocked until the wizard finishes

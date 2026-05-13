@@ -23,6 +23,7 @@ type ResultPayload = {
   courseTitle?: string;
   reviewingRequestId?: string | null;
   ownerEmail?: string | null;
+  qaReportMarkdown?: string | null;
 };
 
 export default function ResultPage() {
@@ -243,6 +244,13 @@ export default function ResultPage() {
   }
 
   const isAudit = payload.mode === "audit";
+  const hasQaReportPanel = Boolean(!isAudit && (payload.qaReportMarkdown || "").trim());
+  const qaPanelHtml = hasQaReportPanel
+    ? renderPreviewHtml(
+        (payload.qaReportMarkdown || "").replace(/\r/g, ""),
+        payload.outputFormat === "text" ? "text" : "markdown",
+      )
+    : "";
   const previewHtml = renderPreviewHtml(editorText || "", payload.outputFormat === "text" ? "text" : "markdown");
 
   return (
@@ -303,7 +311,9 @@ export default function ResultPage() {
 
         <section className="grid items-stretch gap-4 lg:grid-cols-2">
           <div className="flex min-h-[22rem] flex-col rounded-[1.45rem] border border-[#ece9df] bg-white p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:h-[min(72vh,56rem)]">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#647084]">{t("result.editable")}</p>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#647084]">
+              {hasQaReportPanel ? t("regenerate.col_syllabus") : t("result.editable")}
+            </p>
             <textarea
               value={editorText}
               onChange={(event) => setEditorText(event.target.value)}
@@ -311,10 +321,12 @@ export default function ResultPage() {
             />
           </div>
           <div className="flex min-h-[22rem] flex-col rounded-[1.75rem] border border-teal-200 bg-teal-50/90 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] lg:h-[min(72vh,56rem)]">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-teal-800">{t("result.preview")}</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-teal-800">
+              {hasQaReportPanel ? t("regenerate.col_qa") : t("result.preview")}
+            </p>
             <div
               className="markdown-preview h-full flex-1 overflow-y-auto rounded-2xl border border-teal-300 bg-white px-4 py-4 text-[15px]"
-              dangerouslySetInnerHTML={{ __html: previewHtml }}
+              dangerouslySetInnerHTML={{ __html: hasQaReportPanel ? qaPanelHtml : previewHtml }}
             />
           </div>
         </section>

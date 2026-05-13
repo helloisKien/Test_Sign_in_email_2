@@ -15,6 +15,8 @@ import { SkeletonGrid } from "@/components/ui/Skeleton";
 type HistoryItem = {
   request_id: string;
   content: string;
+  syllabus_markdown?: string | null;
+  qa_report_markdown?: string | null;
   output_format?: string | null;
   source_markdown?: string;
   status: string;
@@ -95,6 +97,20 @@ function HistoryPageContent() {
     : null;
   const isAdmin = user?.role === "Admin";
   const isQa = user?.role === "QA";
+  const isTeacher = user?.role === "Teacher";
+
+  function canTeacherRegenerateWithQa(item: HistoryItem): boolean {
+    if (!isTeacher) {
+      return false;
+    }
+    if ((item.mode || "generate") !== "generate") {
+      return false;
+    }
+    if (!["approve", "needs_revision", "reject"].includes(item.status)) {
+      return false;
+    }
+    return Boolean(item.reviewed_at);
+  }
 
   async function loadHistory() {
     setLoading(true);
@@ -185,15 +201,20 @@ function HistoryPageContent() {
         mode: isQa ? "audit" : "generate",
         ownerEmail: user?.email || null,
         requestId: item.request_id,
-        content: item.content,
+        content: (item.syllabus_markdown || item.content) as string,
         outputFormat: item.output_format || "markdown",
         courseTitle: item.course_title || t("untitled_syllabus"),
         sourceMarkdown: item.source_markdown || "",
         reviewingRequestId: isQa ? item.request_id : null,
+        qaReportMarkdown: item.qa_report_markdown || null,
       },
       user?.email || null,
     );
     router.push("/result");
+  }
+
+  function openRegenerateFromHistory(item: HistoryItem) {
+    router.push(`/regenerate?request_id=${encodeURIComponent(item.request_id)}`);
   }
 
   async function continueInWizard(item: HistoryItem) {
@@ -575,6 +596,15 @@ function HistoryPageContent() {
                     >
                       {t("history.continue_wizard")}
                     </button>
+                    {canTeacherRegenerateWithQa(item) ? (
+                      <button
+                        type="button"
+                        className="rounded-full border border-teal-600 bg-teal-50 px-3 py-2 text-xs font-bold text-teal-900 hover:bg-teal-100"
+                        onClick={() => openRegenerateFromHistory(item)}
+                      >
+                        {t("history.edit_with_qa")}
+                      </button>
+                    ) : null}
                     {isAdmin ? (
                       <button
                         type="button"

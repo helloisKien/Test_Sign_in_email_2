@@ -60,6 +60,8 @@ type BackendResult = {
 type ReviewSubmission = {
   request_id: string;
   content: string;
+  syllabus_markdown?: string | null;
+  qa_report_markdown?: string | null;
   status: string;
   output_format?: string | null;
   source_markdown?: string | null;
@@ -259,6 +261,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<BackendResult | null>(null);
   const [resultContent, setResultContent] = useState("");
+  const [generatorQaReportMarkdown, setGeneratorQaReportMarkdown] = useState("");
   const [feedbackType, setFeedbackType] = useState<FeedbackType>("needs_revision");
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null);
@@ -713,17 +716,22 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       setFieldIfExists("course_name", submission.course_title);
     }
 
-    if (submission.content) {
+    if (submission.content || submission.syllabus_markdown) {
+      const syllabusBody = (submission.syllabus_markdown || submission.content || "").trim();
       const restoredResult: BackendResult = {
         request_id: submission.request_id,
         status: submission.status || "draft",
         mode: "generate",
-        content: submission.content,
+        content: syllabusBody,
         output_format: submission.output_format || "markdown",
       };
       setResult(restoredResult);
-      setResultContent(submission.content);
+      setResultContent(syllabusBody);
+    } else {
+      setResult(null);
+      setResultContent("");
     }
+    setGeneratorQaReportMarkdown((submission.qa_report_markdown || "").trim());
   }
 
   function restoreAuditSubmission(submission: ReviewSubmission) {
@@ -735,6 +743,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     setResumeBanner(null);
     setResult(null);
     setResultContent("");
+    setGeneratorQaReportMarkdown("");
     setFeedbackStatus(null);
     setError(null);
     setFeedbackText(submission.qa_feedback || "");
@@ -758,6 +767,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     setResumeLoading(false);
     setResult(null);
     setResultContent("");
+    setGeneratorQaReportMarkdown("");
     setFeedbackText("");
     setFeedbackStatus(null);
     setError(null);
@@ -798,6 +808,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     setReviewingRequestId(null);
     setResult(null);
     setResultContent("");
+    setGeneratorQaReportMarkdown("");
     setFeedbackText("");
     setFeedbackStatus(null);
     store.setCurrentStep(0);
@@ -914,6 +925,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
             ? (activeAuditSubmission?.course_title || t("untitled_syllabus"))
             : (getFieldValue("course_name") || t("untitled_syllabus")),
         reviewingRequestId: mode === "audit" ? reviewingRequestIdRef.current : null,
+        qaReportMarkdown: mode === "generate" && generatorQaReportMarkdown.trim() ? generatorQaReportMarkdown : null,
       },
       userInfo?.email || null,
     );
@@ -1092,6 +1104,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       setLastSubmitPayload(null);
       setResult(nextResult);
       setResultContent(nextResult.content);
+      setGeneratorQaReportMarkdown("");
       openResultPage(nextResult);
       setUploadStatus(
         t("wizard.upload_ok", {
@@ -1349,6 +1362,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       const nextResult = await runStreamingFlow(endpoint, payload);
       setResult(nextResult);
       setResultContent(nextResult.content);
+      setGeneratorQaReportMarkdown("");
       openResultPage(nextResult);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : String(submitError));
@@ -2048,6 +2062,21 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                 onChange={(event) => setResultContent(event.target.value)}
               />
 
+              {mode === "generate" && generatorQaReportMarkdown.trim() ? (
+                <div className="rounded-2xl border border-sky-200 bg-sky-50/90 p-4">
+                  <div className="text-sm font-semibold text-sky-950">{t("wizard.qa_report_panel_title")}</div>
+                  <div
+                    className="markdown-preview mt-2 max-h-[22rem] overflow-y-auto rounded-xl border border-sky-200 bg-white px-3 py-3 text-sm"
+                    dangerouslySetInnerHTML={{
+                      __html: renderPreviewHtml(
+                        generatorQaReportMarkdown,
+                        result.output_format === "text" ? "text" : "markdown",
+                      ),
+                    }}
+                  />
+                </div>
+              ) : null}
+
               <div className="rounded-2xl border border-teal-300 bg-white/80 p-4">
                 <div className="text-sm font-semibold text-slate-900">
                   {mode === "generate" ? t("wizard.submit_qa_section") : t("wizard.send_decision_section")}
@@ -2090,6 +2119,16 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                   >
                     {mode === "generate" ? t("wizard.send_qa") : t("wizard.send_decision")}
                   </button>
+                  {mode === "generate" && generatorQaReportMarkdown.trim() ? (
+                    <button
+                      type="button"
+                      className="rounded-lg border border-teal-700 bg-white px-4 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-100"
+                      onClick={() => void submitFeedback(false, t("regenerate.hitl_pointer_feedback"))}
+                      disabled={!result}
+                    >
+                      {t("regenerate.hitl_btn")}
+                    </button>
+                  ) : null}
                   {mode === "audit" ? (
                     <button
                       type="button"
