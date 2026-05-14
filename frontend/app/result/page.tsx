@@ -38,6 +38,7 @@ export default function ResultPage() {
   const [loading, setLoading] = useState(true);
   const [copyLabel, setCopyLabel] = useState<string | null>(null);
   const [confirmQaOpen, setConfirmQaOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -154,36 +155,43 @@ export default function ResultPage() {
   }
 
   async function sendToQa() {
+    if (submitting) return;
     if (!payload) return;
     const content = readEditorContent();
     if (!content.trim()) {
       showToast(t("result.err_empty_qa"), "error");
       return;
     }
-    const response = await fetch(`${apiBase}/api/review/submissions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        request_id: payload.requestId,
-        content,
-        output_format: payload.outputFormat || "markdown",
-        source_markdown: payload.sourceMarkdown || "",
-        note: feedback || null,
-        course_title: payload.courseTitle || t("untitled_syllabus"),
-        teacher_email: user?.email || null,
-        teacher_name: user?.fullName || null,
-        flow_mode: payload.mode === "audit" ? "audit" : "generate",
-      }),
-    });
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      showToast(body?.error || t("result.err_send_qa"), "error");
-      return;
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${apiBase}/api/review/submissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          request_id: payload.requestId,
+          content,
+          output_format: payload.outputFormat || "markdown",
+          source_markdown: payload.sourceMarkdown || "",
+          note: feedback || null,
+          course_title: payload.courseTitle || t("untitled_syllabus"),
+          teacher_email: user?.email || null,
+          teacher_name: user?.fullName || null,
+          flow_mode: payload.mode === "audit" ? "audit" : "generate",
+        }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        showToast(body?.error || t("result.err_send_qa"), "error");
+        return;
+      }
+      showToast(t("result.ok_sent_qa"), "success");
+    } finally {
+      setSubmitting(false);
     }
-    showToast(t("result.ok_sent_qa"), "success");
   }
 
   async function sendDecision() {
+    if (submitting) return;
     if (!payload) return;
     const content = readEditorContent();
     const requestId = payload.reviewingRequestId || payload.requestId;
@@ -191,24 +199,29 @@ export default function ResultPage() {
       showToast(t("result.err_feedback"), "error");
       return;
     }
-    const response = await fetch(`${apiBase}/api/review/submissions/${encodeURIComponent(requestId)}/review`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        verdict,
-        target_request_id: payload.reviewingRequestId || null,
-        feedback_text: feedback.trim(),
-        reviewed_content: content,
-        output_format: payload.outputFormat || "markdown",
-        reviewer_email: user?.email || null,
-      }),
-    });
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      showToast(body?.error || t("result.err_send_decision"), "error");
-      return;
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${apiBase}/api/review/submissions/${encodeURIComponent(requestId)}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          verdict,
+          target_request_id: payload.reviewingRequestId || null,
+          feedback_text: feedback.trim(),
+          reviewed_content: content,
+          output_format: payload.outputFormat || "markdown",
+          reviewer_email: user?.email || null,
+        }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        showToast(body?.error || t("result.err_send_decision"), "error");
+        return;
+      }
+      showToast(t("result.ok_decision"), "success");
+    } finally {
+      setSubmitting(false);
     }
-    showToast(t("result.ok_decision"), "success");
   }
 
   function continueInWizard() {
@@ -362,8 +375,10 @@ export default function ResultPage() {
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
-              className="rounded-full bg-[#e67700] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-transform hover:bg-[#c75f00] active:scale-[0.98]"
+              className="rounded-full bg-[#e67700] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-transform hover:bg-[#c75f00] active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-400 disabled:shadow-none"
+              disabled={submitting}
               onClick={() => {
+                if (submitting) return;
                 if (isAudit) {
                   void sendDecision();
                 } else {
@@ -371,7 +386,11 @@ export default function ResultPage() {
                 }
               }}
             >
-              {isAudit ? t("result.send_decision") : t("result.send_qa")}
+              {submitting
+                ? t("common.working")
+                : isAudit
+                  ? t("result.send_decision")
+                  : t("result.send_qa")}
             </button>
           </div>
         </section>

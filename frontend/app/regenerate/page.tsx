@@ -42,6 +42,7 @@ function RegeneratePageInner() {
   const [hitlBusy, setHitlBusy] = useState(false);
   const [copyLabel, setCopyLabel] = useState<string | null>(null);
   const [confirmQaOpen, setConfirmQaOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const remediationSnippet = useMemo(() => extractRemediationSection(qaReportText), [qaReportText]);
 
@@ -139,6 +140,7 @@ function RegeneratePageInner() {
   }
 
   async function sendToQa() {
+    if (submitting) return;
     if (!submission?.request_id) {
       return;
     }
@@ -147,27 +149,32 @@ function RegeneratePageInner() {
       showToast(t("result.err_empty_qa"), "error");
       return;
     }
-    const response = await fetch(`${apiBase}/api/review/submissions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        request_id: submission.request_id,
-        content,
-        output_format: submission.output_format === "text" ? "text" : "markdown",
-        source_markdown: submission.source_markdown || "",
-        note: feedback.trim() || null,
-        course_title: submission.course_title || t("untitled_syllabus"),
-        teacher_email: user?.email || null,
-        teacher_name: user?.fullName || null,
-        flow_mode: "generate",
-      }),
-    });
-    if (!response.ok) {
-      const errBody = await response.json().catch(() => null);
-      showToast(errBody?.error || t("result.err_send_qa"), "error");
-      return;
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${apiBase}/api/review/submissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          request_id: submission.request_id,
+          content,
+          output_format: submission.output_format === "text" ? "text" : "markdown",
+          source_markdown: submission.source_markdown || "",
+          note: feedback.trim() || null,
+          course_title: submission.course_title || t("untitled_syllabus"),
+          teacher_email: user?.email || null,
+          teacher_name: user?.fullName || null,
+          flow_mode: "generate",
+        }),
+      });
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => null);
+        showToast(errBody?.error || t("result.err_send_qa"), "error");
+        return;
+      }
+      showToast(t("result.ok_sent_qa"), "success");
+    } finally {
+      setSubmitting(false);
     }
-    showToast(t("result.ok_sent_qa"), "success");
   }
 
   if (!requestId) {
@@ -322,10 +329,14 @@ function RegeneratePageInner() {
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
-              className="rounded-full bg-[#e67700] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-transform hover:bg-[#c75f00] active:scale-[0.98]"
-              onClick={() => setConfirmQaOpen(true)}
+              className="rounded-full bg-[#e67700] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_16px_rgba(230,119,0,0.2)] transition-transform hover:bg-[#c75f00] active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-400 disabled:shadow-none"
+              disabled={submitting}
+              onClick={() => {
+                if (submitting) return;
+                setConfirmQaOpen(true);
+              }}
             >
-              {t("result.send_qa")}
+              {submitting ? t("common.working") : t("result.send_qa")}
             </button>
           </div>
         </section>

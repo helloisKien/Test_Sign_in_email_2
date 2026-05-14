@@ -258,6 +258,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
   } = store;
 
   const [busySubmit, setBusySubmit] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<BackendResult | null>(null);
   const [resultContent, setResultContent] = useState("");
@@ -1452,12 +1453,14 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
   }
 
   async function submitDraftToQa() {
+    if (submittingReview) return;
     if (!result || !resultContent.trim()) {
       setError(t("wizard.err_no_syllabus_qa"));
       return;
     }
     setFeedbackStatus(null);
     setError(null);
+    setSubmittingReview(true);
     try {
       const response = await fetch(`${apiBase}/api/review/submissions`, {
         method: "POST",
@@ -1484,10 +1487,13 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       await loadReviewSubmissions();
     } catch (submissionError) {
       setError(submissionError instanceof Error ? submissionError.message : String(submissionError));
+    } finally {
+      setSubmittingReview(false);
     }
   }
 
   async function sendReviewDecision() {
+    if (submittingReview) return;
     const requestId = reviewingRequestIdRef.current || reviewingRequestId || result?.request_id;
     if (!requestId || !resultContent.trim()) {
       setError(t("wizard.err_open_audit"));
@@ -1499,6 +1505,7 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
     }
     setFeedbackStatus(null);
     setError(null);
+    setSubmittingReview(true);
     try {
       const response = await fetch(`${apiBase}/api/review/submissions/${encodeURIComponent(requestId)}/review`, {
         method: "POST",
@@ -1524,6 +1531,8 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
       await loadReviewSubmissions();
     } catch (reviewError) {
       setError(reviewError instanceof Error ? reviewError.message : String(reviewError));
+    } finally {
+      setSubmittingReview(false);
     }
   }
 
@@ -2107,17 +2116,22 @@ export function WizardShell({ config, roleLabel, userInfo }: WizardShellProps) {
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+                    className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
                     onClick={() => {
+                      if (submittingReview) return;
                       if (mode === "generate") {
                         setConfirmQaOpen(true);
                       } else {
                         void sendReviewDecision();
                       }
                     }}
-                    disabled={!result}
+                    disabled={!result || submittingReview}
                   >
-                    {mode === "generate" ? t("wizard.send_qa") : t("wizard.send_decision")}
+                    {submittingReview
+                      ? t("common.working")
+                      : mode === "generate"
+                        ? t("wizard.send_qa")
+                        : t("wizard.send_decision")}
                   </button>
                   {mode === "generate" && generatorQaReportMarkdown.trim() ? (
                     <button

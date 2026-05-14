@@ -166,7 +166,7 @@ function HistoryPageContent() {
       void loadHistory();
     }, 0);
     return () => window.clearTimeout(timeout);
-  }, [filterStatus, filterDateFrom, filterDateTo, page]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterStatus, filterDateFrom, filterDateTo, page, highlight]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
