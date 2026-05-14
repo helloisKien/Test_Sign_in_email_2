@@ -103,7 +103,9 @@ function HistoryPageContent() {
     if (!isTeacher) {
       return false;
     }
-    if ((item.mode || "generate") !== "generate") {
+    // Draft.mode can be "full" | "skeletal" (GenerationMode enum) for teacher-flow,
+    // or "audit" for QA-flow. Show the button for any non-audit draft.
+    if ((item.mode || "").toLowerCase() === "audit") {
       return false;
     }
     if (!["approve", "needs_revision", "reject"].includes(item.status)) {

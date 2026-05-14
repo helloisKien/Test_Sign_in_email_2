@@ -159,6 +159,7 @@ function RegeneratePageInner() {
         course_title: submission.course_title || t("untitled_syllabus"),
         teacher_email: user?.email || null,
         teacher_name: user?.fullName || null,
+        flow_mode: "generate",
       }),
     });
     if (!response.ok) {

@@ -172,6 +172,7 @@ export default function ResultPage() {
         course_title: payload.courseTitle || t("untitled_syllabus"),
         teacher_email: user?.email || null,
         teacher_name: user?.fullName || null,
+        flow_mode: payload.mode === "audit" ? "audit" : "generate",
       }),
     });
     if (!response.ok) {
