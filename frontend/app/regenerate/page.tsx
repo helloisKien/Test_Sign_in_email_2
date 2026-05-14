@@ -22,6 +22,7 @@ type SubmissionPayload = {
   source_markdown?: string | null;
   course_title?: string | null;
   qa_feedback?: string | null;
+  verdict?: string | null;
   output_format?: string | null;
 };
 
@@ -66,7 +67,6 @@ function RegeneratePageInner() {
       const qa = (data.qa_report_markdown || "").replace(/\r/g, "");
       setSyllabusText(stripAuditorLeakage(syllabus));
       setQaReportText(qa);
-      setFeedback((data.qa_feedback || "").trim());
     } finally {
       setLoading(false);
     }
@@ -249,6 +249,32 @@ function RegeneratePageInner() {
           </div>
         </header>
 
+        {submission.qa_feedback ? (
+          <section
+            data-guide="regenerate-qa-feedback"
+            className="rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 shadow-[0_10px_24px_rgba(225,29,72,0.08)]"
+          >
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-rose-800">
+              <span>{t("wizard.qa_feedback_label")}</span>
+              {submission.verdict ? (
+                <span className="rounded-full bg-rose-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-900">
+                  {submission.verdict === "approve"
+                    ? t("wizard.verdict_pass")
+                    : submission.verdict === "reject"
+                      ? t("wizard.verdict_fail")
+                      : t("wizard.verdict_needs")}
+                </span>
+              ) : null}
+            </div>
+            <div
+              className="markdown-preview mt-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm leading-6 text-rose-950"
+              dangerouslySetInnerHTML={{
+                __html: renderPreviewHtml(submission.qa_feedback, "markdown"),
+              }}
+            />
+          </section>
+        ) : null}
+
         <section className="flex flex-wrap gap-2 rounded-[1.05rem] border border-[#e8ebef] bg-[#fbfbfc] px-4 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
           <button
             type="button"
@@ -278,14 +304,6 @@ function RegeneratePageInner() {
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-teal-300 bg-white/80 px-4 py-8 text-center text-sm text-teal-900">
                 <p>{t("wizard.qa_report_panel_empty")}</p>
-                {submission.qa_feedback ? (
-                  <div
-                    className="markdown-preview mt-4 max-h-[50vh] w-full overflow-y-auto rounded-xl border border-teal-200 bg-white px-3 py-3 text-left text-sm"
-                    dangerouslySetInnerHTML={{
-                      __html: renderPreviewHtml(submission.qa_feedback, "markdown"),
-                    }}
-                  />
-                ) : null}
               </div>
             )}
           </div>
